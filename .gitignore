@@ -1,0 +1,68 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+*.pem
+
+# Logs
+logs
+*.log
+/var/log/
+
+# AWS
+.aws/
+*.pem
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# SSL Certificates
+*.key
+*.crt
+*.csr
+*.p12
+certs/
+
+# Secrets
+secrets/
+*.secret
+api-keys.json
+
+# Build outputs
+dist/
+build/
+*.zip
+
+# Testing
+coverage/
+.nyc_output/
+
+# Terraform
+*.tfstate
+*.tfstate.backup
+.terraform/
+*.tfvars
+
+# Classification-sensitive files
+*CONFIDENTIAL*
+*SECRET*
+*CLASSIFIED*
