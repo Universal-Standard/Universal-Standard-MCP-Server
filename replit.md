@@ -79,9 +79,13 @@ Uses Replit AI Integrations for OpenAI access (no API key required). Charges are
 
 ## Recent Changes
 
-- 2025-12-01: Initial MCP server implementation
-  - Express.js server with WebSocket support
+- 2025-12-01: Complete MCP server implementation
+  - Express.js server with WebSocket support on port 3000
+  - Multi-provider AI support (OpenAI, Anthropic, Gemini)
   - Tool, prompt, and resource registries
-  - OpenAI provider integration
-  - 8 built-in tools
-  - API authentication with rate limiting
+  - 9 built-in tools with AI integration
+  - REST API and WebSocket endpoints for MCP protocol
+  - API authentication with rate limiting and scoped permissions
+  - REST sampling endpoint at POST /mcp/sampling/create
+  - Provider-specific error handling with status codes
+  - Comprehensive logging with Winston
