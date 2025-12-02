@@ -52,10 +52,13 @@ The server runs on port 5000 with a production-quality web interface.
 
 - **Home** - Welcome page with feature overview
 - **Dashboard** - Real-time monitoring with stats and activity logs
-- **Services** - Browse tools, prompts, and resources
+- **Tools** - Browse and execute 9 built-in tools with user-friendly forms
+- **Resources** - Access MCP server resources
 - **AI Playground** - Interactive chat with AI providers
-- **Settings** - Configure AI providers and server settings
-- **About** - Platform information and technical specs
+- **Connections** - Manage external service integrations (placeholder)
+- **Add-ons** - Third-party extensions marketplace (placeholder)
+- **Activity Logs** - View all API activity and audit trail
+- **Settings** - Configure AI providers, API keys, and server settings
 
 ## API Endpoints
 
@@ -125,6 +128,16 @@ Uses PostgreSQL (Neon-backed) with Drizzle ORM for persistence:
 
 ## Recent Changes
 
+- 2025-12-02: Navigation restructure and UX improvements
+  - Renamed to "SPURS MCP Server" (US Department of Special Projects and Unified Response Services)
+  - Split Services page into dedicated Tools and Resources pages
+  - Added Connections page for external integrations (placeholder)
+  - Added Add-ons page for third-party extensions (placeholder)
+  - Implemented user-friendly tool forms with proper input fields (no raw JSON)
+  - Added real-time search filtering across tools and resources
+  - Fixed all branding across API endpoints and UI
+  - Cleaned up dead code and broken navigation
+
 - 2025-12-02: Full database integration and UI fixes
   - Added PostgreSQL database with Drizzle ORM schema
   - API key management with CRUD endpoints and UI
@@ -136,8 +149,7 @@ Uses PostgreSQL (Neon-backed) with Drizzle ORM for persistence:
   - Cleaned up project structure
 
 - 2025-12-02: Production-quality web interface
-  - Full SPA with Home, Dashboard, Services, AI Playground, Settings, About pages
-  - Modern CSS with responsive design and dark sidebar
+  - Full SPA with modern CSS and dark sidebar
   - Interactive AI Playground for testing providers
   - Settings page for provider configuration
   - Activity logging and monitoring dashboard
