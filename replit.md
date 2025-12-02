@@ -24,6 +24,11 @@ This server implements the Model Context Protocol specification, providing:
 │   ├── css/styles.css       # Production-quality CSS
 │   ├── js/app.js            # Frontend JavaScript application
 │   └── index.html           # Main SPA template
+├── shared/
+│   └── schema.js            # Drizzle ORM database schema
+├── server/
+│   ├── db.js                # Database connection (Neon PostgreSQL)
+│   └── storage.js           # Storage service with CRUD operations
 ├── src/
 │   ├── config/              # Configuration management
 │   ├── middleware/          # Auth, rate limiting, error handling
@@ -72,8 +77,13 @@ The server runs on port 5000 with a production-quality web interface.
 - `GET /api/settings/stats` - Server statistics
 - `GET /api/settings/providers` - List AI providers
 - `POST /api/settings/providers/:name/test` - Test provider connection
+- `PUT /api/settings/providers/:name` - Update provider configuration
 - `GET /api/settings/server` - Server configuration
 - `PATCH /api/settings/server` - Update settings
+- `GET /api/settings/api-keys` - List API keys
+- `POST /api/settings/api-keys` - Create new API key
+- `DELETE /api/settings/api-keys/:id` - Delete an API key
+- `GET /api/settings/activity` - Get activity logs from database
 
 ### WebSocket
 - `WS /ws` - WebSocket connection for MCP protocol
@@ -104,7 +114,26 @@ To enable other providers:
 - **Anthropic**: Set `ANTHROPIC_API_KEY` secret
 - **Gemini**: Set `GOOGLE_API_KEY` secret
 
+## Database
+
+Uses PostgreSQL (Neon-backed) with Drizzle ORM for persistence:
+- **API Keys**: Secure storage with encryption, scopes, rate limits
+- **Provider Settings**: AI provider configurations (models, API keys)
+- **Server Config**: Server-wide settings (rate limiting, CORS, security)
+- **Activity Logs**: Full audit trail of all API actions
+- **Chat History**: AI Playground conversation persistence
+
 ## Recent Changes
+
+- 2025-12-02: Full database integration and UI fixes
+  - Added PostgreSQL database with Drizzle ORM schema
+  - API key management with CRUD endpoints and UI
+  - Provider configuration persistence
+  - Activity logging to database with audit trail
+  - Chat history persistence for AI Playground
+  - Fixed all UI save/load functionality
+  - Fixed config bug (gpt-5 to gpt-4o-mini)
+  - Cleaned up project structure
 
 - 2025-12-02: Production-quality web interface
   - Full SPA with Home, Dashboard, Services, AI Playground, Settings, About pages

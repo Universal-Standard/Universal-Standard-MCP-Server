@@ -5,7 +5,16 @@ const crypto = require('crypto');
 
 class DatabaseStorage {
   async getApiKeys() {
-    return await db.select().from(apiKeys).where(eq(apiKeys.isActive, true));
+    const keys = await db.select().from(apiKeys).where(eq(apiKeys.isActive, true));
+    return keys.map(k => ({
+      id: k.id,
+      name: k.name,
+      keyPreview: k.key ? `${k.key.substring(0, 8)}...${k.key.substring(k.key.length - 4)}` : null,
+      scopes: k.scopes,
+      rateLimit: k.rateLimit,
+      createdAt: k.createdAt,
+      lastUsedAt: k.lastUsedAt
+    }));
   }
 
   async getApiKey(id) {
