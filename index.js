@@ -17,6 +17,7 @@ require('./src/tools');
 
 const mcpRoutes = require('./src/routes/mcp');
 const healthRoutes = require('./src/routes/health');
+const settingsRoutes = require('./src/routes/settings');
 
 const app = express();
 
@@ -85,6 +86,7 @@ app.get('/api/info', (req, res) => {
 });
 
 app.use('/mcp', validateApiKey, mcpRoutes);
+app.use('/api/settings', validateApiKey, settingsRoutes);
 
 app.use((req, res, next) => {
   if (req.method === 'GET' && !req.path.startsWith('/mcp') && !req.path.startsWith('/health') && !req.path.startsWith('/api') && !req.path.startsWith('/ws')) {

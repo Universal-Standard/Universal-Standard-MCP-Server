@@ -4,7 +4,7 @@ const apiKeys = new Map();
 
 apiKeys.set('demo-api-key', { 
   name: 'Demo User', 
-  scopes: ['tools:read', 'tools:execute', 'prompts:read', 'resources:read', 'sampling'],
+  scopes: ['tools:read', 'tools:execute', 'prompts:read', 'resources:read', 'sampling', 'settings:read', 'settings:write'],
   rateLimit: 100 
 });
 

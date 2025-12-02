@@ -156,17 +156,26 @@ function getPageTitle(page) {
 }
 
 async function loadDashboard() {
-  const [tools, prompts, resources] = await Promise.all([
-    loadTools(),
-    loadPrompts(),
-    loadResources()
-  ]);
-  
-  document.getElementById('stat-tools').textContent = tools.length;
-  document.getElementById('stat-prompts').textContent = prompts.length;
-  document.getElementById('stat-resources').textContent = resources.length;
-  
-  addLog('info', 'Dashboard data loaded');
+  try {
+    const stats = await apiRequest('/api/settings/stats');
+    
+    document.getElementById('stat-tools').textContent = stats.tools;
+    document.getElementById('stat-prompts').textContent = stats.prompts;
+    document.getElementById('stat-resources').textContent = stats.resources;
+    
+    addLog('info', 'Dashboard data loaded');
+  } catch (error) {
+    console.error('Failed to load dashboard:', error);
+    const [tools, prompts, resources] = await Promise.all([
+      loadTools(),
+      loadPrompts(),
+      loadResources()
+    ]);
+    
+    document.getElementById('stat-tools').textContent = tools.length;
+    document.getElementById('stat-prompts').textContent = prompts.length;
+    document.getElementById('stat-resources').textContent = resources.length;
+  }
 }
 
 async function loadServices() {
@@ -319,10 +328,19 @@ async function testProvider(providerId) {
   btn.disabled = true;
   
   try {
-    const result = await testAIProvider(providerId);
-    showNotification(`${providerId} is working! Response: "${result.content?.text || 'Success'}"`, 'success');
+    const result = await apiRequest(`/api/settings/providers/${providerId}/test`, {
+      method: 'POST'
+    });
+    
+    if (result.success) {
+      showNotification(`${providerId} is working! Response: "${result.response || 'Success'}"`, 'success');
+      addLog('success', `Provider ${providerId} test successful`);
+    } else {
+      throw new Error(result.error);
+    }
   } catch (error) {
     showNotification(`Failed to connect to ${providerId}: ${error.message}`, 'error');
+    addLog('error', `Provider ${providerId} test failed: ${error.message}`);
   } finally {
     btn.textContent = originalText;
     btn.disabled = false;
