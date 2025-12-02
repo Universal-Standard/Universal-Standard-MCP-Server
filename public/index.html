@@ -147,7 +147,7 @@
                 <div class="console-line">
                   <span style="color: #60a5fa;">curl</span>
                   <span style="color: #f8f8f2;"> -X POST </span>
-                  <span style="color: #a5f3fc;">http://localhost:3000/mcp/tools/call</span>
+                  <span style="color: #a5f3fc;">http://localhost:5000/mcp/tools/call</span>
                   <span style="color: #f8f8f2;"> \</span>
                 </div>
                 <div class="console-line">
@@ -221,7 +221,7 @@
                     </tr>
                     <tr>
                       <td style="font-weight: 600;">Port</td>
-                      <td>3000</td>
+                      <td>5000</td>
                     </tr>
                     <tr>
                       <td style="font-weight: 600;">WebSocket</td>
@@ -326,38 +326,25 @@
             <p>Interact with AI models in real-time</p>
           </div>
           
-          <div class="grid grid-2">
-            <div class="card">
-              <div class="card-header">
-                <h3 class="card-title">Chat</h3>
-              </div>
-              <div class="card-body">
-                <div class="form-group">
-                  <label class="form-label">AI Provider</label>
-                  <select class="form-select" id="playground-provider">
-                    <option value="openai">OpenAI GPT-4o</option>
-                    <option value="anthropic">Anthropic Claude</option>
-                    <option value="gemini">Google Gemini</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Message</label>
-                  <textarea class="form-input" id="playground-message" rows="4" placeholder="Type your message here..."></textarea>
-                </div>
-                <button class="btn btn-primary" onclick="sendPlaygroundMessage()" style="width: 100%;">
-                  Send Message
-                </button>
+          <div class="card" style="height: calc(100vh - 250px); display: flex; flex-direction: column;">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+              <h3 class="card-title">Chat</h3>
+              <div style="display: flex; gap: 12px; align-items: center;">
+                <select class="form-select" id="playground-provider" style="width: auto;">
+                  <option value="openai">OpenAI GPT-4o</option>
+                  <option value="anthropic">Anthropic Claude</option>
+                  <option value="gemini">Google Gemini</option>
+                </select>
+                <button class="btn btn-secondary" onclick="clearPlayground()">Clear Chat</button>
               </div>
             </div>
-            
-            <div class="card">
-              <div class="card-header">
-                <h3 class="card-title">Response</h3>
+            <div class="card-body" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column;">
+              <div id="playground-messages" style="flex: 1; overflow-y: auto; padding: 16px; background: var(--gray-50); border-radius: var(--radius); margin-bottom: 16px;">
+                <p style="color: var(--gray-500); text-align: center;">Start a conversation...</p>
               </div>
-              <div class="card-body">
-                <div id="playground-response" style="min-height: 200px; padding: 16px; background: var(--gray-100); border-radius: var(--radius); color: var(--gray-600);">
-                  AI response will appear here...
-                </div>
+              <div style="display: flex; gap: 12px;">
+                <input type="text" class="form-input" id="playground-input" placeholder="Type your message and press Enter..." style="flex: 1;">
+                <button class="btn btn-primary" onclick="sendPlaygroundMessage()">Send</button>
               </div>
             </div>
           </div>
@@ -366,30 +353,17 @@
         <div id="page-logs" class="page" style="display: none;">
           <div class="page-header">
             <h1>Activity Logs</h1>
-            <p>View detailed server activity and API requests</p>
+            <p>View detailed server activity and API requests from the database</p>
           </div>
           
           <div class="card">
             <div class="card-header">
-              <h3 class="card-title">Recent Activity</h3>
-              <div style="display: flex; gap: 12px;">
-                <select class="form-select" style="width: auto;">
-                  <option>All Levels</option>
-                  <option>Info</option>
-                  <option>Success</option>
-                  <option>Warning</option>
-                  <option>Error</option>
-                </select>
-                <button class="btn btn-secondary" onclick="state.logs = []; updateConsole();">Clear Logs</button>
-              </div>
+              <h3 class="card-title">Database Activity Logs</h3>
+              <button class="btn btn-secondary" onclick="loadLogsPage()">Refresh</button>
             </div>
             <div class="card-body">
-              <div class="console" id="logs-console" style="max-height: 600px;">
-                <div class="console-line">
-                  <span class="console-time">[--:--:--]</span>
-                  <span class="console-level info">INFO</span>
-                  <span>Log viewer initialized</span>
-                </div>
+              <div id="activity-logs-container" style="max-height: 600px; overflow-y: auto;">
+                <p style="color: var(--gray-500);">Loading activity logs...</p>
               </div>
             </div>
           </div>
@@ -472,29 +446,38 @@
           </div>
           
           <div id="settings-api" class="settings-section" style="display: none;">
+            <div class="card" style="margin-bottom: 24px;">
+              <div class="card-header">
+                <h3 class="card-title">API Keys</h3>
+              </div>
+              <div class="card-body">
+                <p style="color: var(--gray-600); margin-bottom: 16px;">
+                  Manage API keys for accessing your MCP server. Each key can have specific scopes and rate limits.
+                </p>
+                <div id="api-keys-list">
+                  <div style="text-align: center; padding: 20px; color: var(--gray-500);">
+                    Loading API keys...
+                  </div>
+                </div>
+              </div>
+            </div>
+            
             <div class="card">
               <div class="card-header">
-                <h3 class="card-title">API Configuration</h3>
+                <h3 class="card-title">Server Configuration</h3>
               </div>
               <div class="card-body">
                 <div class="form-group">
-                  <label class="form-label">API Key</label>
-                  <div style="display: flex; gap: 12px;">
-                    <input type="text" class="form-input" value="demo-api-key" readonly>
-                    <button class="btn btn-secondary">Regenerate</button>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Rate Limit (requests per minute)</label>
-                  <input type="number" class="form-input" value="100">
+                  <label class="form-label">Default Rate Limit (requests per minute)</label>
+                  <input type="number" class="form-input" id="server-rate-limit" value="100">
                 </div>
                 <div class="form-group">
                   <label class="form-label">CORS Origins</label>
-                  <input type="text" class="form-input" value="*" placeholder="*, https://example.com">
+                  <input type="text" class="form-input" id="server-cors" value="*" placeholder="*, https://example.com">
                 </div>
               </div>
               <div class="card-footer">
-                <button class="btn btn-primary">Save Changes</button>
+                <button class="btn btn-primary" onclick="saveServerSettings()">Save Changes</button>
               </div>
             </div>
           </div>

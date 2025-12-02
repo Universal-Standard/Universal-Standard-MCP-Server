@@ -18,7 +18,7 @@ const config = {
     openai: {
       baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
       apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-      defaultModel: 'gpt-5',
+      defaultModel: 'gpt-4o-mini',
     },
     anthropic: {
       apiKey: process.env.ANTHROPIC_API_KEY,

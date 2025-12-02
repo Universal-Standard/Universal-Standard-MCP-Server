@@ -7,29 +7,35 @@ const state = {
   prompts: [],
   resources: [],
   providers: [],
-  settings: {
-    openai: { enabled: true, model: 'gpt-4o-mini' },
-    anthropic: { enabled: false, apiKey: '' },
-    gemini: { enabled: false, apiKey: '' }
-  },
-  logs: []
+  apiKeys: [],
+  settings: {},
+  logs: [],
+  chatSessionId: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+  chatMessages: []
 };
 
 async function apiRequest(endpoint, options = {}) {
-  const response = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      'X-API-Key': API_KEY,
-      ...options.headers
+  try {
+    const response = await fetch(`${API_BASE}${endpoint}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': API_KEY,
+        ...options.headers
+      }
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error || data.message || `API Error: ${response.statusText}`);
     }
-  });
-  
-  if (!response.ok) {
-    throw new Error(`API Error: ${response.statusText}`);
+    
+    return data;
+  } catch (error) {
+    console.error('API Request failed:', error);
+    throw error;
   }
-  
-  return response.json();
 }
 
 async function loadTools() {
@@ -65,12 +71,35 @@ async function loadResources() {
   }
 }
 
-async function loadCapabilities() {
+async function loadProviders() {
   try {
-    return await apiRequest('/mcp/capabilities');
+    const data = await apiRequest('/api/settings/providers');
+    state.providers = data.providers || [];
+    return state.providers;
   } catch (error) {
-    console.error('Failed to load capabilities:', error);
-    return null;
+    console.error('Failed to load providers:', error);
+    return [];
+  }
+}
+
+async function loadApiKeys() {
+  try {
+    const data = await apiRequest('/api/settings/api-keys');
+    state.apiKeys = data.apiKeys || [];
+    return state.apiKeys;
+  } catch (error) {
+    console.error('Failed to load API keys:', error);
+    return [];
+  }
+}
+
+async function loadActivityLogs() {
+  try {
+    const data = await apiRequest('/api/settings/activity?limit=50');
+    return data.logs || [];
+  } catch (error) {
+    console.error('Failed to load activity logs:', error);
+    return [];
   }
 }
 
@@ -84,23 +113,6 @@ async function executeTool(name, args = {}) {
     return result;
   } catch (error) {
     addLog('error', `Tool "${name}" failed: ${error.message}`);
-    throw error;
-  }
-}
-
-async function testAIProvider(provider) {
-  try {
-    const result = await apiRequest('/mcp/sampling/create', {
-      method: 'POST',
-      body: JSON.stringify({
-        messages: [{ role: 'user', content: 'Say "Hello from ' + provider + '!" in exactly those words.' }],
-        provider: provider
-      })
-    });
-    addLog('success', `${provider} provider test successful`);
-    return result;
-  } catch (error) {
-    addLog('error', `${provider} provider test failed: ${error.message}`);
     throw error;
   }
 }
@@ -142,6 +154,7 @@ function navigate(page) {
   if (page === 'dashboard') loadDashboard();
   if (page === 'services') loadServices();
   if (page === 'settings') loadSettings();
+  if (page === 'logs') loadLogsPage();
 }
 
 function getPageTitle(page) {
@@ -149,6 +162,8 @@ function getPageTitle(page) {
     home: 'Welcome',
     dashboard: 'Dashboard',
     services: 'Services',
+    playground: 'AI Playground',
+    logs: 'Activity Logs',
     settings: 'Settings',
     about: 'About'
   };
@@ -166,15 +181,7 @@ async function loadDashboard() {
     addLog('info', 'Dashboard data loaded');
   } catch (error) {
     console.error('Failed to load dashboard:', error);
-    const [tools, prompts, resources] = await Promise.all([
-      loadTools(),
-      loadPrompts(),
-      loadResources()
-    ]);
-    
-    document.getElementById('stat-tools').textContent = tools.length;
-    document.getElementById('stat-prompts').textContent = prompts.length;
-    document.getElementById('stat-resources').textContent = resources.length;
+    addLog('error', 'Failed to load dashboard');
   }
 }
 
@@ -251,44 +258,208 @@ function renderResourcesGrid(resources) {
   `).join('');
 }
 
-function loadSettings() {
-  updateProviderCards();
+async function loadSettings() {
+  const [providers, apiKeys] = await Promise.all([
+    loadProviders(),
+    loadApiKeys()
+  ]);
+  
+  renderProviderCards(providers);
+  renderApiKeysTable(apiKeys);
 }
 
-function updateProviderCards() {
-  const providers = [
-    { id: 'openai', name: 'OpenAI', logo: 'O', configured: true },
-    { id: 'anthropic', name: 'Anthropic Claude', logo: 'A', configured: state.settings.anthropic.apiKey !== '' },
-    { id: 'gemini', name: 'Google Gemini', logo: 'G', configured: state.settings.gemini.apiKey !== '' }
-  ];
-  
+function renderProviderCards(providers) {
   const container = document.getElementById('providers-list');
   if (!container) return;
+  
+  const logoMap = { openai: 'O', anthropic: 'A', gemini: 'G' };
   
   container.innerHTML = providers.map(provider => `
     <div class="provider-card">
       <div class="provider-header">
         <div class="provider-info">
-          <div class="provider-logo ${provider.id}">${provider.logo}</div>
-          <span class="provider-name">${provider.name}</span>
+          <div class="provider-logo ${provider.name}">${logoMap[provider.name] || provider.name[0].toUpperCase()}</div>
+          <span class="provider-name">${provider.name.charAt(0).toUpperCase() + provider.name.slice(1)}</span>
         </div>
         <div class="provider-status ${provider.configured ? 'active' : 'inactive'}">
           <span class="status-dot" style="width: 8px; height: 8px; border-radius: 50%; background: currentColor;"></span>
           ${provider.configured ? 'Configured' : 'Not Configured'}
         </div>
       </div>
-      <div class="provider-actions" style="display: flex; gap: 12px;">
-        <button class="btn btn-secondary" onclick="configureProvider('${provider.id}')">Configure</button>
-        <button class="btn btn-primary" onclick="testProvider('${provider.id}')" ${!provider.configured ? 'disabled' : ''}>Test Connection</button>
+      <div class="provider-actions" style="display: flex; gap: 12px; margin-top: 16px;">
+        <button class="btn btn-secondary" onclick="configureProvider('${provider.name}')">Configure</button>
+        <button class="btn btn-primary" onclick="testProvider('${provider.name}')" ${!provider.configured ? 'disabled' : ''}>Test Connection</button>
       </div>
     </div>
   `).join('');
+}
+
+function renderApiKeysTable(apiKeys) {
+  const container = document.getElementById('api-keys-list');
+  if (!container) return;
+  
+  if (apiKeys.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 40px; color: var(--gray-500);">
+        <p>No API keys created yet.</p>
+        <button class="btn btn-primary" onclick="showCreateApiKeyModal()" style="margin-top: 16px;">Create Your First API Key</button>
+      </div>
+    `;
+    return;
+  }
+  
+  container.innerHTML = `
+    <table class="api-keys-table" style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr style="text-align: left; border-bottom: 1px solid var(--gray-200);">
+          <th style="padding: 12px;">Name</th>
+          <th style="padding: 12px;">Key</th>
+          <th style="padding: 12px;">Scopes</th>
+          <th style="padding: 12px;">Created</th>
+          <th style="padding: 12px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${apiKeys.map(key => `
+          <tr style="border-bottom: 1px solid var(--gray-100);">
+            <td style="padding: 12px; font-weight: 500;">${key.name}</td>
+            <td style="padding: 12px; font-family: monospace; color: var(--gray-500);">${key.keyPrefix}</td>
+            <td style="padding: 12px;">${key.scopes?.length || 0} scopes</td>
+            <td style="padding: 12px; color: var(--gray-500);">${key.createdAt ? new Date(key.createdAt).toLocaleDateString() : 'N/A'}</td>
+            <td style="padding: 12px;">
+              <button class="btn btn-secondary" onclick="deleteApiKey(${key.id})" style="padding: 6px 12px; font-size: 0.875rem;">Revoke</button>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+    <button class="btn btn-primary" onclick="showCreateApiKeyModal()" style="margin-top: 20px;">Add New API Key</button>
+  `;
+}
+
+function showCreateApiKeyModal() {
+  const modal = document.getElementById('provider-modal');
+  const title = document.getElementById('provider-modal-title');
+  const content = document.getElementById('provider-modal-content');
+  
+  title.textContent = 'Create API Key';
+  
+  content.innerHTML = `
+    <div class="form-group">
+      <label class="form-label">Key Name</label>
+      <input type="text" class="form-input" id="new-key-name" placeholder="e.g., Production API Key">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Rate Limit (requests/min)</label>
+      <input type="number" class="form-input" id="new-key-ratelimit" value="100" min="1" max="10000">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Scopes</label>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+        <label style="display: flex; align-items: center; gap: 4px;">
+          <input type="checkbox" class="scope-checkbox" value="tools:read" checked> Tools Read
+        </label>
+        <label style="display: flex; align-items: center; gap: 4px;">
+          <input type="checkbox" class="scope-checkbox" value="tools:execute" checked> Tools Execute
+        </label>
+        <label style="display: flex; align-items: center; gap: 4px;">
+          <input type="checkbox" class="scope-checkbox" value="prompts:read" checked> Prompts Read
+        </label>
+        <label style="display: flex; align-items: center; gap: 4px;">
+          <input type="checkbox" class="scope-checkbox" value="resources:read" checked> Resources Read
+        </label>
+        <label style="display: flex; align-items: center; gap: 4px;">
+          <input type="checkbox" class="scope-checkbox" value="sampling" checked> Sampling
+        </label>
+        <label style="display: flex; align-items: center; gap: 4px;">
+          <input type="checkbox" class="scope-checkbox" value="settings:read"> Settings Read
+        </label>
+        <label style="display: flex; align-items: center; gap: 4px;">
+          <input type="checkbox" class="scope-checkbox" value="settings:write"> Settings Write
+        </label>
+      </div>
+    </div>
+    <div style="display: flex; gap: 12px; margin-top: 24px;">
+      <button class="btn btn-secondary" onclick="closeModal('provider-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="createApiKey()">Create API Key</button>
+    </div>
+  `;
+  
+  modal.classList.add('active');
+}
+
+async function createApiKey() {
+  const name = document.getElementById('new-key-name').value.trim();
+  const rateLimit = parseInt(document.getElementById('new-key-ratelimit').value) || 100;
+  const scopes = Array.from(document.querySelectorAll('.scope-checkbox:checked')).map(cb => cb.value);
+  
+  if (!name) {
+    showNotification('Please enter a name for the API key', 'error');
+    return;
+  }
+  
+  try {
+    const result = await apiRequest('/api/settings/api-keys', {
+      method: 'POST',
+      body: JSON.stringify({ name, scopes, rateLimit })
+    });
+    
+    closeModal('provider-modal');
+    
+    showNotification('API key created successfully!', 'success');
+    addLog('success', `API key "${name}" created`);
+    
+    const keyModal = document.getElementById('tool-modal');
+    document.getElementById('tool-modal-title').textContent = 'API Key Created';
+    document.getElementById('tool-modal-content').innerHTML = `
+      <p style="margin-bottom: 16px; color: var(--gray-600);">
+        Your new API key has been created. <strong>Copy it now</strong> - you won't be able to see it again!
+      </p>
+      <div style="background: var(--gray-100); padding: 16px; border-radius: var(--radius); font-family: monospace; word-break: break-all;">
+        ${result.apiKey.key}
+      </div>
+      <button class="btn btn-primary" style="margin-top: 16px;" onclick="copyToClipboard('${result.apiKey.key}'); closeModal('tool-modal');">
+        Copy to Clipboard
+      </button>
+    `;
+    keyModal.classList.add('active');
+    
+    loadSettings();
+  } catch (error) {
+    showNotification(`Failed to create API key: ${error.message}`, 'error');
+    addLog('error', `Failed to create API key: ${error.message}`);
+  }
+}
+
+async function deleteApiKey(id) {
+  if (!confirm('Are you sure you want to revoke this API key? This action cannot be undone.')) {
+    return;
+  }
+  
+  try {
+    await apiRequest(`/api/settings/api-keys/${id}`, { method: 'DELETE' });
+    showNotification('API key revoked', 'success');
+    addLog('info', 'API key revoked');
+    loadSettings();
+  } catch (error) {
+    showNotification(`Failed to revoke API key: ${error.message}`, 'error');
+  }
+}
+
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    showNotification('Copied to clipboard!', 'success');
+  }).catch(() => {
+    showNotification('Failed to copy to clipboard', 'error');
+  });
 }
 
 function configureProvider(providerId) {
   const modal = document.getElementById('provider-modal');
   const title = document.getElementById('provider-modal-title');
   const content = document.getElementById('provider-modal-content');
+  
+  const provider = state.providers.find(p => p.name === providerId) || {};
   
   title.textContent = `Configure ${providerId.charAt(0).toUpperCase() + providerId.slice(1)}`;
   
@@ -300,25 +471,83 @@ function configureProvider(providerId) {
       <div class="form-group">
         <label class="form-label">Default Model</label>
         <select class="form-select" id="openai-model">
-          <option value="gpt-4o-mini">GPT-4o Mini (Fast)</option>
-          <option value="gpt-4o">GPT-4o (Powerful)</option>
-          <option value="gpt-4-turbo">GPT-4 Turbo</option>
+          <option value="gpt-4o-mini" ${provider.defaultModel === 'gpt-4o-mini' ? 'selected' : ''}>GPT-4o Mini (Fast)</option>
+          <option value="gpt-4o" ${provider.defaultModel === 'gpt-4o' ? 'selected' : ''}>GPT-4o (Powerful)</option>
+          <option value="gpt-4-turbo" ${provider.defaultModel === 'gpt-4-turbo' ? 'selected' : ''}>GPT-4 Turbo</option>
         </select>
+      </div>
+      <div style="display: flex; gap: 12px; margin-top: 24px;">
+        <button class="btn btn-secondary" onclick="closeModal('provider-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveProviderSettings('${providerId}')">Save Settings</button>
       </div>
     `;
   } else {
     content.innerHTML = `
       <div class="form-group">
         <label class="form-label">API Key</label>
-        <input type="password" class="form-input" id="${providerId}-apikey" placeholder="Enter your API key">
+        <input type="password" class="form-input" id="${providerId}-apikey" placeholder="Enter your API key" value="${provider.hasCustomKey ? '••••••••••••' : ''}">
+        <p style="color: var(--gray-500); font-size: 0.75rem; margin-top: 4px;">
+          Leave blank to keep existing key
+        </p>
       </div>
-      <p style="color: var(--gray-500); font-size: 0.875rem;">
-        Your API key is stored securely and never shared.
-      </p>
+      <div class="form-group">
+        <label class="form-label">Default Model</label>
+        <select class="form-select" id="${providerId}-model">
+          ${providerId === 'anthropic' ? `
+            <option value="claude-3-5-sonnet-20241022" ${provider.defaultModel === 'claude-3-5-sonnet-20241022' ? 'selected' : ''}>Claude 3.5 Sonnet</option>
+            <option value="claude-3-opus-20240229" ${provider.defaultModel === 'claude-3-opus-20240229' ? 'selected' : ''}>Claude 3 Opus</option>
+            <option value="claude-3-haiku-20240307" ${provider.defaultModel === 'claude-3-haiku-20240307' ? 'selected' : ''}>Claude 3 Haiku</option>
+          ` : `
+            <option value="gemini-1.5-flash" ${provider.defaultModel === 'gemini-1.5-flash' ? 'selected' : ''}>Gemini 1.5 Flash</option>
+            <option value="gemini-1.5-pro" ${provider.defaultModel === 'gemini-1.5-pro' ? 'selected' : ''}>Gemini 1.5 Pro</option>
+          `}
+        </select>
+      </div>
+      <div class="form-group">
+        <label style="display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="${providerId}-enabled" ${provider.isEnabled !== false ? 'checked' : ''}>
+          Enable this provider
+        </label>
+      </div>
+      <div style="display: flex; gap: 12px; margin-top: 24px;">
+        <button class="btn btn-secondary" onclick="closeModal('provider-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveProviderSettings('${providerId}')">Save Settings</button>
+      </div>
     `;
   }
   
   modal.classList.add('active');
+}
+
+async function saveProviderSettings(providerId) {
+  const data = {};
+  
+  if (providerId === 'openai') {
+    data.defaultModel = document.getElementById('openai-model').value;
+  } else {
+    const apiKeyInput = document.getElementById(`${providerId}-apikey`);
+    const apiKey = apiKeyInput.value;
+    if (apiKey && !apiKey.includes('••••')) {
+      data.apiKey = apiKey;
+    }
+    data.defaultModel = document.getElementById(`${providerId}-model`).value;
+    data.isEnabled = document.getElementById(`${providerId}-enabled`).checked;
+  }
+  
+  try {
+    await apiRequest(`/api/settings/providers/${providerId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+    
+    closeModal('provider-modal');
+    showNotification(`${providerId} settings saved successfully!`, 'success');
+    addLog('success', `Provider ${providerId} configured`);
+    loadSettings();
+  } catch (error) {
+    showNotification(`Failed to save settings: ${error.message}`, 'error');
+    addLog('error', `Failed to save ${providerId} settings`);
+  }
 }
 
 async function testProvider(providerId) {
@@ -347,12 +576,54 @@ async function testProvider(providerId) {
   }
 }
 
+async function loadLogsPage() {
+  const container = document.getElementById('activity-logs-container');
+  if (!container) return;
+  
+  container.innerHTML = '<p style="color: var(--gray-500);">Loading activity logs...</p>';
+  
+  try {
+    const logs = await loadActivityLogs();
+    
+    if (logs.length === 0) {
+      container.innerHTML = '<p style="color: var(--gray-500);">No activity logs yet.</p>';
+      return;
+    }
+    
+    container.innerHTML = `
+      <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr style="text-align: left; border-bottom: 1px solid var(--gray-200);">
+            <th style="padding: 12px;">Time</th>
+            <th style="padding: 12px;">Type</th>
+            <th style="padding: 12px;">Action</th>
+            <th style="padding: 12px;">Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${logs.map(log => `
+            <tr style="border-bottom: 1px solid var(--gray-100);">
+              <td style="padding: 12px; color: var(--gray-500); font-size: 0.875rem;">${new Date(log.timestamp).toLocaleString()}</td>
+              <td style="padding: 12px;"><span class="badge badge-${log.type}">${log.type}</span></td>
+              <td style="padding: 12px;">${log.action}</td>
+              <td style="padding: 12px; color: var(--gray-500); font-size: 0.875rem;">${JSON.stringify(log.details || {})}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  } catch (error) {
+    container.innerHTML = `<p style="color: var(--danger);">Failed to load activity logs: ${error.message}</p>`;
+  }
+}
+
 function closeModal(modalId) {
   document.getElementById(modalId).classList.remove('active');
 }
 
 function showNotification(message, type = 'info') {
   const notification = document.createElement('div');
+  notification.className = 'notification';
   notification.style.cssText = `
     position: fixed;
     bottom: 24px;
@@ -364,6 +635,7 @@ function showNotification(message, type = 'info') {
     box-shadow: var(--shadow-lg);
     z-index: 2000;
     animation: slideIn 0.3s ease;
+    max-width: 400px;
   `;
   notification.textContent = message;
   document.body.appendChild(notification);
@@ -371,7 +643,7 @@ function showNotification(message, type = 'info') {
   setTimeout(() => {
     notification.style.animation = 'slideOut 0.3s ease';
     setTimeout(() => notification.remove(), 300);
-  }, 3000);
+  }, 4000);
 }
 
 async function showToolModal(toolName) {
@@ -420,10 +692,158 @@ async function executeCurrentTool() {
   }
 }
 
+async function sendPlaygroundMessage() {
+  const input = document.getElementById('playground-input');
+  const provider = document.getElementById('playground-provider')?.value || 'openai';
+  const messagesContainer = document.getElementById('playground-messages');
+  
+  const message = input.value.trim();
+  if (!message) return;
+  
+  input.value = '';
+  
+  messagesContainer.innerHTML += `
+    <div class="chat-message user">
+      <strong>You:</strong> ${message}
+    </div>
+  `;
+  
+  state.chatMessages.push({ role: 'user', content: message });
+  
+  try {
+    await apiRequest('/api/settings/chat/message', {
+      method: 'POST',
+      body: JSON.stringify({
+        sessionId: state.chatSessionId,
+        provider,
+        role: 'user',
+        content: message
+      })
+    });
+  } catch (e) {
+    console.warn('Failed to save user message:', e);
+  }
+  
+  messagesContainer.innerHTML += `
+    <div class="chat-message assistant thinking" id="thinking-indicator">
+      <strong>AI:</strong> Thinking...
+    </div>
+  `;
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  
+  try {
+    const result = await apiRequest('/mcp/sampling/create', {
+      method: 'POST',
+      body: JSON.stringify({
+        messages: state.chatMessages,
+        provider
+      })
+    });
+    
+    document.getElementById('thinking-indicator')?.remove();
+    
+    const assistantMessage = result.content?.text || result.content || 'No response';
+    state.chatMessages.push({ role: 'assistant', content: assistantMessage });
+    
+    messagesContainer.innerHTML += `
+      <div class="chat-message assistant">
+        <strong>AI (${result.model || provider}):</strong> ${assistantMessage}
+      </div>
+    `;
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    
+    try {
+      await apiRequest('/api/settings/chat/message', {
+        method: 'POST',
+        body: JSON.stringify({
+          sessionId: state.chatSessionId,
+          provider,
+          model: result.model,
+          role: 'assistant',
+          content: assistantMessage
+        })
+      });
+    } catch (e) {
+      console.warn('Failed to save assistant message:', e);
+    }
+    
+    addLog('success', `AI response received from ${provider}`);
+  } catch (error) {
+    document.getElementById('thinking-indicator')?.remove();
+    messagesContainer.innerHTML += `
+      <div class="chat-message error">
+        <strong>Error:</strong> ${error.message}
+      </div>
+    `;
+    addLog('error', `AI request failed: ${error.message}`);
+  }
+}
+
+function clearPlayground() {
+  state.chatMessages = [];
+  state.chatSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const container = document.getElementById('playground-messages');
+  if (container) {
+    container.innerHTML = '<p style="color: var(--gray-500); text-align: center;">Start a conversation...</p>';
+  }
+  addLog('info', 'Chat cleared');
+}
+
+async function saveServerSettings() {
+  const rateLimit = parseInt(document.getElementById('server-rate-limit')?.value) || 100;
+  const cors = document.getElementById('server-cors')?.value || '*';
+  
+  try {
+    await apiRequest('/api/settings/server', {
+      method: 'PATCH',
+      body: JSON.stringify({
+        rateLimit: { max: rateLimit },
+        security: { corsOrigins: cors }
+      })
+    });
+    
+    showNotification('Server settings saved successfully!', 'success');
+    addLog('success', 'Server settings updated');
+  } catch (error) {
+    showNotification(`Failed to save settings: ${error.message}`, 'error');
+    addLog('error', 'Failed to save server settings');
+  }
+}
+
+function showSettingsTab(tab) {
+  document.querySelectorAll('#page-settings .tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('#page-settings .settings-section').forEach(s => s.style.display = 'none');
+  
+  event.target.classList.add('active');
+  document.getElementById(`settings-${tab}`).style.display = 'block';
+  
+  if (tab === 'api') {
+    loadApiKeys();
+  }
+}
+
+function showServiceTab(tab) {
+  document.querySelectorAll('#page-services .tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('#page-services .service-section').forEach(s => s.style.display = 'none');
+  
+  event.target.classList.add('active');
+  document.getElementById(`services-${tab}`).style.display = 'block';
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.nav-item').forEach(item => {
     item.addEventListener('click', () => navigate(item.dataset.page));
   });
+  
+  const playgroundInput = document.getElementById('playground-input');
+  if (playgroundInput) {
+    playgroundInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendPlaygroundMessage();
+      }
+    });
+  }
   
   addLog('info', 'Application initialized');
   addLog('info', 'Connected to MCP server');
@@ -441,5 +861,39 @@ style.textContent = `
     from { transform: translateX(0); opacity: 1; }
     to { transform: translateX(100%); opacity: 0; }
   }
+  .chat-message {
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    border-radius: var(--radius);
+    background: var(--gray-100);
+  }
+  .chat-message.user {
+    background: var(--primary);
+    color: white;
+    margin-left: 20%;
+  }
+  .chat-message.assistant {
+    background: var(--gray-100);
+    margin-right: 20%;
+  }
+  .chat-message.error {
+    background: var(--danger);
+    color: white;
+  }
+  .chat-message.thinking {
+    opacity: 0.7;
+    font-style: italic;
+  }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  .badge-api_key { background: #e0f2fe; color: #0369a1; }
+  .badge-settings { background: #fef3c7; color: #92400e; }
+  .badge-test { background: #d1fae5; color: #065f46; }
+  .badge-error { background: #fee2e2; color: #b91c1c; }
 `;
 document.head.appendChild(style);

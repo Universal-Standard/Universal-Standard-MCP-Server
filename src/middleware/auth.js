@@ -2,7 +2,7 @@ const config = require('../config');
 const logger = require('../utils/logger');
 const { validateApiKey: getKeyData, addApiKey } = require('./apiKeys');
 
-function validateApiKey(req, res, next) {
+async function validateApiKey(req, res, next) {
   const apiKey = req.headers[config.security.apiKeyHeader.toLowerCase()];
   
   if (!apiKey) {
@@ -13,17 +13,25 @@ function validateApiKey(req, res, next) {
     });
   }
   
-  const keyData = getKeyData(apiKey);
-  if (!keyData) {
-    logger.warn('Invalid API key used', { ip: req.ip, path: req.path });
-    return res.status(401).json({
-      error: 'Unauthorized',
-      message: 'Invalid API key.',
+  try {
+    const keyData = await getKeyData(apiKey);
+    if (!keyData) {
+      logger.warn('Invalid API key used', { ip: req.ip, path: req.path });
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'Invalid API key.',
+      });
+    }
+    
+    req.apiKeyData = keyData;
+    next();
+  } catch (error) {
+    logger.error('Error validating API key', { error: error.message });
+    return res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to validate API key.',
     });
   }
-  
-  req.apiKeyData = keyData;
-  next();
 }
 
 function requireScope(scope) {

@@ -1,18 +1,25 @@
 {
-  "name": "nodejs",
+  "name": "us-spurs-mcp-server",
   "version": "1.0.0",
-  "description": "",
+  "description": "US-SPURS Advanced MCP Server",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@neondatabase/serverless": "^1.0.2",
     "@types/node": "^22.13.11",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
+    "drizzle-kit": "^0.31.7",
+    "drizzle-orm": "^0.44.7",
     "express": "^5.1.0",
     "express-rate-limit": "^8.2.1",
     "helmet": "^8.1.0",
