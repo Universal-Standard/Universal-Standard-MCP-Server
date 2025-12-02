@@ -72,7 +72,7 @@ app.use('/health', healthRoutes);
 
 app.get('/api/info', (req, res) => {
   res.json({
-    name: 'US-SPURS Advanced MCP Server',
+    name: 'SPURS MCP Server',
     version: '1.0.0',
     status: 'operational',
     timestamp: new Date().toISOString(),
@@ -106,13 +106,13 @@ setupWebSocket(server);
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, '0.0.0.0', () => {
-  logger.info(`US-SPURS MCP Server started`, {
+  logger.info(`SPURS MCP Server started`, {
     port: PORT,
     env: config.nodeEnv,
   });
   console.log(`
 ╔════════════════════════════════════════════════════════════════╗
-║          US-SPURS Advanced MCP Server v1.0.0                   ║
+║                SPURS MCP Server v1.0.0                         ║
 ╠════════════════════════════════════════════════════════════════╣
 ║  Server running on port ${PORT}                                    ║
 ║                                                                ║

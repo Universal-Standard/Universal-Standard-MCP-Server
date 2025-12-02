@@ -152,7 +152,8 @@ function navigate(page) {
   document.querySelector('.page-title').textContent = getPageTitle(page);
   
   if (page === 'dashboard') loadDashboard();
-  if (page === 'services') loadServices();
+  if (page === 'tools') loadToolsPage();
+  if (page === 'resources') loadResourcesPage();
   if (page === 'settings') loadSettings();
   if (page === 'logs') loadLogsPage();
 }
@@ -161,13 +162,29 @@ function getPageTitle(page) {
   const titles = {
     home: 'Welcome',
     dashboard: 'Dashboard',
-    services: 'Services',
+    tools: 'Tools',
+    resources: 'Resources',
     playground: 'AI Playground',
+    connections: 'Connections',
+    addons: 'Add-ons',
     logs: 'Activity Logs',
     settings: 'Settings',
     about: 'About'
   };
-  return titles[page] || 'US-SPURS MCP Server';
+  return titles[page] || 'SPURS MCP Server';
+}
+
+async function loadToolsPage() {
+  const tools = await loadTools();
+  renderToolsGrid(tools);
+  
+  const countEl = document.getElementById('tools-count');
+  if (countEl) countEl.textContent = tools.length;
+}
+
+async function loadResourcesPage() {
+  const resources = await loadResources();
+  renderResourcesGrid(resources);
 }
 
 async function loadDashboard() {
@@ -186,14 +203,12 @@ async function loadDashboard() {
 }
 
 async function loadServices() {
-  const [tools, prompts, resources] = await Promise.all([
+  const [tools, resources] = await Promise.all([
     loadTools(),
-    loadPrompts(),
     loadResources()
   ]);
   
   renderToolsGrid(tools);
-  renderPromptsGrid(prompts);
   renderResourcesGrid(resources);
 }
 
@@ -646,6 +661,75 @@ function showNotification(message, type = 'info') {
   }, 4000);
 }
 
+function getToolFormFields(tool) {
+  const toolForms = {
+    'ai_chat': [
+      { name: 'message', label: 'Message', type: 'textarea', placeholder: 'Enter your message...', required: true },
+      { name: 'provider', label: 'AI Provider', type: 'select', options: ['openai', 'anthropic', 'gemini'], default: 'openai' }
+    ],
+    'ai_summarize': [
+      { name: 'text', label: 'Text to Summarize', type: 'textarea', placeholder: 'Paste the text you want to summarize...', required: true },
+      { name: 'provider', label: 'AI Provider', type: 'select', options: ['openai', 'anthropic', 'gemini'], default: 'openai' }
+    ],
+    'ai_providers': [],
+    'web_search': [
+      { name: 'query', label: 'Search Query', type: 'text', placeholder: 'Enter search terms...', required: true }
+    ],
+    'code_sandbox': [
+      { name: 'code', label: 'JavaScript Code', type: 'textarea', placeholder: 'Enter JavaScript code to execute...', required: true }
+    ],
+    'generate_uuid': [
+      { name: 'count', label: 'Number of UUIDs', type: 'number', placeholder: '1', default: '1' }
+    ],
+    'timestamp': [],
+    'json_format': [
+      { name: 'json', label: 'JSON to Format', type: 'textarea', placeholder: '{"key": "value"}', required: true }
+    ],
+    'base64': [
+      { name: 'text', label: 'Text', type: 'textarea', placeholder: 'Enter text...', required: true },
+      { name: 'action', label: 'Action', type: 'select', options: ['encode', 'decode'], default: 'encode' }
+    ]
+  };
+  
+  return toolForms[tool.name] || [];
+}
+
+function renderToolForm(tool) {
+  const fields = getToolFormFields(tool);
+  
+  if (fields.length === 0) {
+    return `
+      <p style="margin-bottom: 20px; color: var(--gray-600);">${tool.description}</p>
+      <p style="color: var(--gray-500); font-style: italic;">This tool requires no input parameters.</p>
+    `;
+  }
+  
+  let formHtml = `<p style="margin-bottom: 20px; color: var(--gray-600);">${tool.description}</p>`;
+  
+  fields.forEach(field => {
+    formHtml += `<div class="form-group">`;
+    formHtml += `<label class="form-label">${field.label}${field.required ? ' *' : ''}</label>`;
+    
+    if (field.type === 'textarea') {
+      formHtml += `<textarea class="form-input tool-field" data-field="${field.name}" rows="4" placeholder="${field.placeholder || ''}">${field.default || ''}</textarea>`;
+    } else if (field.type === 'select') {
+      formHtml += `<select class="form-select tool-field" data-field="${field.name}">`;
+      field.options.forEach(opt => {
+        formHtml += `<option value="${opt}" ${opt === field.default ? 'selected' : ''}>${opt}</option>`;
+      });
+      formHtml += `</select>`;
+    } else if (field.type === 'number') {
+      formHtml += `<input type="number" class="form-input tool-field" data-field="${field.name}" placeholder="${field.placeholder || ''}" value="${field.default || ''}">`;
+    } else {
+      formHtml += `<input type="text" class="form-input tool-field" data-field="${field.name}" placeholder="${field.placeholder || ''}" value="${field.default || ''}">`;
+    }
+    
+    formHtml += `</div>`;
+  });
+  
+  return formHtml;
+}
+
 async function showToolModal(toolName) {
   const tool = state.tools.find(t => t.name === toolName);
   if (!tool) return;
@@ -653,14 +737,10 @@ async function showToolModal(toolName) {
   const modal = document.getElementById('tool-modal');
   document.getElementById('tool-modal-title').textContent = tool.name;
   document.getElementById('tool-modal-content').innerHTML = `
-    <p style="margin-bottom: 20px; color: var(--gray-600);">${tool.description}</p>
-    <div class="form-group">
-      <label class="form-label">Input Parameters (JSON)</label>
-      <textarea class="form-input" id="tool-input" rows="5" placeholder='{"key": "value"}'></textarea>
-    </div>
-    <div id="tool-result" style="display: none;">
+    ${renderToolForm(tool)}
+    <div id="tool-result" style="display: none; margin-top: 20px;">
       <label class="form-label">Result</label>
-      <pre style="background: var(--gray-100); padding: 16px; border-radius: var(--radius); overflow-x: auto;"></pre>
+      <pre style="background: var(--gray-100); padding: 16px; border-radius: var(--radius); overflow-x: auto; max-height: 300px;"></pre>
     </div>
   `;
   
@@ -669,27 +749,107 @@ async function showToolModal(toolName) {
 
 async function executeCurrentTool() {
   const toolName = document.getElementById('tool-modal-title').textContent;
-  const inputEl = document.getElementById('tool-input');
   const resultEl = document.getElementById('tool-result');
   
-  let args = {};
-  try {
-    if (inputEl.value.trim()) {
-      args = JSON.parse(inputEl.value);
+  const args = {};
+  document.querySelectorAll('.tool-field').forEach(field => {
+    const fieldName = field.dataset.field;
+    let value = field.value;
+    
+    if (field.type === 'number' && value) {
+      value = parseInt(value, 10);
     }
-  } catch (e) {
-    showNotification('Invalid JSON input', 'error');
-    return;
-  }
+    
+    if (value) {
+      args[fieldName] = value;
+    }
+  });
   
   try {
+    showNotification('Executing tool...', 'info');
     const result = await executeTool(toolName, args);
     resultEl.style.display = 'block';
     resultEl.querySelector('pre').textContent = JSON.stringify(result, null, 2);
+    showNotification('Tool executed successfully!', 'success');
   } catch (error) {
     resultEl.style.display = 'block';
     resultEl.querySelector('pre').textContent = `Error: ${error.message}`;
+    showNotification(`Tool failed: ${error.message}`, 'error');
   }
+}
+
+function handleSearch(query) {
+  const searchResults = document.getElementById('search-results');
+  const searchGrid = document.getElementById('search-results-grid');
+  
+  if (!query || query.length < 2) {
+    if (searchResults) searchResults.style.display = 'none';
+    return;
+  }
+  
+  const lowerQuery = query.toLowerCase();
+  
+  const matchingTools = state.tools.filter(t => 
+    t.name.toLowerCase().includes(lowerQuery) || 
+    t.description.toLowerCase().includes(lowerQuery) ||
+    (t.category && t.category.toLowerCase().includes(lowerQuery))
+  );
+  
+  const matchingResources = state.resources.filter(r =>
+    r.name.toLowerCase().includes(lowerQuery) ||
+    r.description.toLowerCase().includes(lowerQuery)
+  );
+  
+  if (matchingTools.length === 0 && matchingResources.length === 0) {
+    if (searchResults) searchResults.style.display = 'none';
+    return;
+  }
+  
+  if (searchResults && searchGrid) {
+    searchResults.style.display = 'block';
+    
+    const categoryIcons = { ai: '🤖', search: '🔍', code: '💻', utility: '🔧' };
+    
+    let html = matchingTools.map(tool => `
+      <div class="tool-card" onclick="showToolModal('${tool.name}')">
+        <div class="tool-card-header">
+          <div class="tool-card-icon">${categoryIcons[tool.category] || '⚡'}</div>
+          <div class="tool-card-info">
+            <h3>${tool.name}</h3>
+            <span class="tool-card-category">${tool.category} tool</span>
+          </div>
+        </div>
+        <p class="tool-card-description">${tool.description}</p>
+      </div>
+    `).join('');
+    
+    html += matchingResources.map(resource => `
+      <div class="tool-card" onclick="showResourceModal('${resource.uri}')">
+        <div class="tool-card-header">
+          <div class="tool-card-icon">📦</div>
+          <div class="tool-card-info">
+            <h3>${resource.name}</h3>
+            <span class="tool-card-category">Resource</span>
+          </div>
+        </div>
+        <p class="tool-card-description">${resource.description}</p>
+      </div>
+    `).join('');
+    
+    searchGrid.innerHTML = html;
+    
+    if (state.currentPage !== 'tools') {
+      navigate('tools');
+    }
+  }
+}
+
+function clearSearch() {
+  const searchInput = document.getElementById('global-search');
+  const searchResults = document.getElementById('search-results');
+  
+  if (searchInput) searchInput.value = '';
+  if (searchResults) searchResults.style.display = 'none';
 }
 
 async function sendPlaygroundMessage() {

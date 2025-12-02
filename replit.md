@@ -1,6 +1,6 @@
-# US-SPURS Advanced MCP Server
+# SPURS MCP Server
 
-A production-ready Model Context Protocol (MCP) server for seamless integration with multiple AI platforms.
+Official Model Context Protocol (MCP) server for the US Department of Special Projects and Unified Response Services (US-SPURS).
 
 ## Requirements
 

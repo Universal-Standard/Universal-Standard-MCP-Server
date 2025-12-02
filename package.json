@@ -1,5 +1,5 @@
 {
-  "name": "us-spurs-mcp-server",
+  "name": "spurs-mcp-server",
   "version": "1.0.0",
   "description": "US-SPURS Advanced MCP Server",
   "main": "index.js",

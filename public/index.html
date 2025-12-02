@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>US-SPURS Advanced MCP Server</title>
+  <title>SPURS MCP Server</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -14,8 +14,8 @@
     <aside class="sidebar">
       <div class="sidebar-header">
         <div class="logo">
-          <div class="logo-icon">🚀</div>
-          <span>US-SPURS</span>
+          <div class="logo-icon">🎯</div>
+          <span>SPURS MCP</span>
         </div>
       </div>
       
@@ -34,14 +34,26 @@
         
         <div class="nav-section">
           <div class="nav-section-title">Platform</div>
-          <div class="nav-item" data-page="services">
-            <span class="nav-item-icon">⚡</span>
-            <span>Services</span>
-            <span class="nav-item-badge">9</span>
+          <div class="nav-item" data-page="tools">
+            <span class="nav-item-icon">🔧</span>
+            <span>Tools</span>
+            <span class="nav-item-badge" id="tools-count">9</span>
+          </div>
+          <div class="nav-item" data-page="resources">
+            <span class="nav-item-icon">📦</span>
+            <span>Resources</span>
           </div>
           <div class="nav-item" data-page="playground">
             <span class="nav-item-icon">🎮</span>
             <span>AI Playground</span>
+          </div>
+          <div class="nav-item" data-page="connections">
+            <span class="nav-item-icon">🔗</span>
+            <span>Connections</span>
+          </div>
+          <div class="nav-item" data-page="addons">
+            <span class="nav-item-icon">🧩</span>
+            <span>Add-ons</span>
           </div>
           <div class="nav-item" data-page="logs">
             <span class="nav-item-icon">📋</span>
@@ -76,7 +88,7 @@
         <div class="top-bar-actions">
           <div class="search-box">
             <span>🔍</span>
-            <input type="text" placeholder="Search tools, prompts, resources...">
+            <input type="text" id="global-search" placeholder="Search tools, resources..." oninput="handleSearch(this.value)">
           </div>
           <button class="btn btn-primary" onclick="navigate('playground')">
             <span>🤖</span>
@@ -89,8 +101,8 @@
         <div id="page-home" class="page">
           <div class="hero">
             <div class="hero-content">
-              <h1>US-SPURS Advanced MCP Server</h1>
-              <p>A production-ready Model Context Protocol server with multi-AI platform support, enterprise security, and extensible tool architecture.</p>
+              <h1>SPURS MCP Server</h1>
+              <p>Official Model Context Protocol server for the US Department of Special Projects and Unified Response Services. Multi-AI platform support with enterprise-grade security.</p>
               <div style="display: flex; gap: 12px;">
                 <button class="btn btn-primary" style="background: white; color: var(--primary);" onclick="navigate('dashboard')">
                   View Dashboard
@@ -289,33 +301,175 @@
           </div>
         </div>
         
-        <div id="page-services" class="page" style="display: none;">
+        <div id="page-tools" class="page" style="display: none;">
           <div class="page-header">
-            <h1>Services</h1>
-            <p>Explore available tools, prompts, and resources</p>
+            <h1>Tools</h1>
+            <p>Execute AI-powered tools and utilities</p>
           </div>
           
-          <div class="tabs">
-            <button class="tab active" onclick="showServiceTab('tools')">Tools</button>
-            <button class="tab" onclick="showServiceTab('prompts')">Prompts</button>
-            <button class="tab" onclick="showServiceTab('resources')">Resources</button>
-          </div>
-          
-          <div id="services-tools" class="service-section">
-            <div class="feature-grid" id="tools-grid">
-              <div class="loading"><div class="spinner"></div></div>
+          <div id="search-results" style="display: none; margin-bottom: 24px;">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Search Results</h3>
+                <button class="btn btn-secondary" onclick="clearSearch()">Clear Search</button>
+              </div>
+              <div class="card-body">
+                <div class="feature-grid" id="search-results-grid"></div>
+              </div>
             </div>
           </div>
           
-          <div id="services-prompts" class="service-section" style="display: none;">
-            <div class="feature-grid" id="prompts-grid">
-              <div class="loading"><div class="spinner"></div></div>
-            </div>
+          <div class="feature-grid" id="tools-grid">
+            <div class="loading"><div class="spinner"></div></div>
+          </div>
+        </div>
+        
+        <div id="page-resources" class="page" style="display: none;">
+          <div class="page-header">
+            <h1>Resources</h1>
+            <p>Access server information and data resources</p>
           </div>
           
-          <div id="services-resources" class="service-section" style="display: none;">
-            <div class="feature-grid" id="resources-grid">
-              <div class="loading"><div class="spinner"></div></div>
+          <div class="feature-grid" id="resources-grid">
+            <div class="loading"><div class="spinner"></div></div>
+          </div>
+        </div>
+        
+        <div id="page-connections" class="page" style="display: none;">
+          <div class="page-header">
+            <h1>Connections</h1>
+            <p>Manage external service integrations and API connections</p>
+          </div>
+          
+          <div class="grid" style="gap: 24px;">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">AI Provider Connections</h3>
+                <span class="badge badge-success">3 Available</span>
+              </div>
+              <div class="card-body">
+                <div id="connections-providers" style="display: flex; flex-direction: column; gap: 16px;">
+                  <div class="connection-item" style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--gray-50); border-radius: var(--radius);">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                      <div class="provider-logo openai" style="width: 40px; height: 40px;">O</div>
+                      <div>
+                        <h4 style="font-weight: 600; margin-bottom: 4px;">OpenAI</h4>
+                        <p style="color: var(--gray-500); font-size: 0.875rem;">GPT-4o, GPT-4o-mini, DALL-E</p>
+                      </div>
+                    </div>
+                    <span class="badge badge-success">Connected</span>
+                  </div>
+                  <div class="connection-item" style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--gray-50); border-radius: var(--radius);">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                      <div class="provider-logo anthropic" style="width: 40px; height: 40px;">A</div>
+                      <div>
+                        <h4 style="font-weight: 600; margin-bottom: 4px;">Anthropic</h4>
+                        <p style="color: var(--gray-500); font-size: 0.875rem;">Claude 3.5 Sonnet, Claude 3 Opus</p>
+                      </div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="navigate('settings')">Configure</button>
+                  </div>
+                  <div class="connection-item" style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--gray-50); border-radius: var(--radius);">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                      <div class="provider-logo gemini" style="width: 40px; height: 40px;">G</div>
+                      <div>
+                        <h4 style="font-weight: 600; margin-bottom: 4px;">Google Gemini</h4>
+                        <p style="color: var(--gray-500); font-size: 0.875rem;">Gemini Pro, Gemini Ultra</p>
+                      </div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="navigate('settings')">Configure</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">WebSocket Connection</h3>
+              </div>
+              <div class="card-body">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--gray-50); border-radius: var(--radius);">
+                  <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 40px; height: 40px; background: var(--primary); color: white; border-radius: var(--radius); display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">🔌</div>
+                    <div>
+                      <h4 style="font-weight: 600; margin-bottom: 4px;">Real-time WebSocket</h4>
+                      <p style="color: var(--gray-500); font-size: 0.875rem;">ws://localhost:5000/ws</p>
+                    </div>
+                  </div>
+                  <span class="badge badge-success">Active</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Database Connection</h3>
+              </div>
+              <div class="card-body">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--gray-50); border-radius: var(--radius);">
+                  <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 40px; height: 40px; background: #336791; color: white; border-radius: var(--radius); display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">🐘</div>
+                    <div>
+                      <h4 style="font-weight: 600; margin-bottom: 4px;">PostgreSQL (Neon)</h4>
+                      <p style="color: var(--gray-500); font-size: 0.875rem;">Persistent storage for keys, logs, and settings</p>
+                    </div>
+                  </div>
+                  <span class="badge badge-success">Connected</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div id="page-addons" class="page" style="display: none;">
+          <div class="page-header">
+            <h1>Add-ons</h1>
+            <p>Extend functionality with plugins and extensions</p>
+          </div>
+          
+          <div class="grid grid-2" style="gap: 24px;">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Installed Add-ons</h3>
+              </div>
+              <div class="card-body">
+                <div style="text-align: center; padding: 40px; color: var(--gray-500);">
+                  <div style="font-size: 3rem; margin-bottom: 16px;">🧩</div>
+                  <p>No add-ons installed yet</p>
+                  <p style="font-size: 0.875rem; margin-top: 8px;">Browse the marketplace to find extensions</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Available Add-ons</h3>
+                <span class="badge badge-primary">Coming Soon</span>
+              </div>
+              <div class="card-body">
+                <div class="feature-grid">
+                  <div class="feature-card" style="opacity: 0.6;">
+                    <div class="feature-icon">📊</div>
+                    <h3>Analytics Dashboard</h3>
+                    <p>Advanced usage metrics and AI performance analytics</p>
+                  </div>
+                  <div class="feature-card" style="opacity: 0.6;">
+                    <div class="feature-icon">🔔</div>
+                    <h3>Notifications</h3>
+                    <p>Slack, Discord, and email notifications for events</p>
+                  </div>
+                  <div class="feature-card" style="opacity: 0.6;">
+                    <div class="feature-icon">📁</div>
+                    <h3>File Storage</h3>
+                    <p>S3-compatible file storage integration</p>
+                  </div>
+                  <div class="feature-card" style="opacity: 0.6;">
+                    <div class="feature-icon">🔐</div>
+                    <h3>SSO Authentication</h3>
+                    <p>SAML and OAuth single sign-on support</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -522,22 +676,22 @@
         
         <div id="page-about" class="page" style="display: none;">
           <div class="page-header">
-            <h1>About US-SPURS</h1>
-            <p>Learn more about the MCP Server platform</p>
+            <h1>About SPURS MCP Server</h1>
+            <p>US Department of Special Projects and Unified Response Services</p>
           </div>
           
           <div class="grid grid-2">
             <div class="card">
               <div class="card-body">
-                <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 16px; color: var(--gray-800);">What is US-SPURS?</h2>
+                <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 16px; color: var(--gray-800);">What is SPURS?</h2>
                 <p style="color: var(--gray-600); line-height: 1.8; margin-bottom: 16px;">
-                  US-SPURS (Universal Scalable Platform for Unified Runtime Services) is a production-ready Model Context Protocol server designed for seamless integration with multiple AI platforms.
+                  SPURS MCP Server is the official Model Context Protocol platform for the US Department of Special Projects and Unified Response Services (US-SPURS).
                 </p>
                 <p style="color: var(--gray-600); line-height: 1.8; margin-bottom: 16px;">
-                  Built with enterprise-grade security, extensibility, and performance in mind, US-SPURS provides a unified interface for AI tools, prompts, and resources across OpenAI, Anthropic, and Google platforms.
+                  Built with enterprise-grade security, extensibility, and performance in mind, SPURS provides a unified interface for AI tools and resources across OpenAI, Anthropic, and Google platforms.
                 </p>
                 <p style="color: var(--gray-600); line-height: 1.8;">
-                  The platform is designed to self-grow and adapt, leveraging multiple AI providers to deliver intelligent, context-aware responses for any application.
+                  The platform enables secure, context-aware AI operations for departmental applications and mission-critical workflows.
                 </p>
               </div>
             </div>
