@@ -107,8 +107,8 @@
                 <button class="btn btn-primary" style="background: white; color: var(--primary);" onclick="navigate('dashboard')">
                   View Dashboard
                 </button>
-                <button class="btn btn-secondary" style="border-color: white; color: white;" onclick="navigate('services')">
-                  Explore Services
+                <button class="btn btn-secondary" style="border-color: white; color: white;" onclick="navigate('tools')">
+                  Browse Tools
                 </button>
               </div>
             </div>
@@ -809,14 +809,6 @@
   
   <script src="/js/app.js"></script>
   <script>
-    function showServiceTab(tab) {
-      document.querySelectorAll('#page-services .tabs .tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.service-section').forEach(s => s.style.display = 'none');
-      
-      event.target.classList.add('active');
-      document.getElementById(`services-${tab}`).style.display = 'block';
-    }
-    
     function showSettingsTab(tab) {
       document.querySelectorAll('#page-settings .tabs .tab').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.settings-section').forEach(s => s.style.display = 'none');

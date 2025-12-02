@@ -117,7 +117,7 @@ router.get('/server', requireScope('settings:read'), async (req, res) => {
     const dbSettings = await storage.getServerSettings();
     
     res.json({
-      name: 'US-SPURS Advanced MCP Server',
+      name: 'SPURS MCP Server',
       version: '1.0.0',
       protocol: 'MCP 2024-11-05',
       environment: process.env.NODE_ENV || 'development',
@@ -129,7 +129,7 @@ router.get('/server', requireScope('settings:read'), async (req, res) => {
     });
   } catch (error) {
     res.json({
-      name: 'US-SPURS Advanced MCP Server',
+      name: 'SPURS MCP Server',
       version: '1.0.0',
       protocol: 'MCP 2024-11-05',
       environment: process.env.NODE_ENV || 'development',

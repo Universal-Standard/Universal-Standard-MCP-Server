@@ -63,7 +63,7 @@ resourceRegistry.register({
       uri: 'mcp://server/info',
       mimeType: 'application/json',
       text: JSON.stringify({
-        name: 'US-SPURS Advanced MCP Server',
+        name: 'SPURS MCP Server',
         version: '1.0.0',
         status: 'operational',
         timestamp: new Date().toISOString(),

@@ -982,14 +982,6 @@ function showSettingsTab(tab) {
   }
 }
 
-function showServiceTab(tab) {
-  document.querySelectorAll('#page-services .tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('#page-services .service-section').forEach(s => s.style.display = 'none');
-  
-  event.target.classList.add('active');
-  document.getElementById(`services-${tab}`).style.display = 'block';
-}
-
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.nav-item').forEach(item => {
     item.addEventListener('click', () => navigate(item.dataset.page));

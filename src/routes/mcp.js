@@ -130,7 +130,7 @@ router.get('/capabilities', (req, res) => {
       logging: {},
     },
     serverInfo: {
-      name: 'US-SPURS Advanced MCP Server',
+      name: 'SPURS MCP Server',
       version: '1.0.0',
     },
   });

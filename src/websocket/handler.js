@@ -63,7 +63,7 @@ function setupWebSocket(server) {
       params: {
         clientId,
         serverInfo: {
-          name: 'US-SPURS Advanced MCP Server',
+          name: 'SPURS MCP Server',
           version: '1.0.0',
         },
         authenticated: true,
@@ -135,7 +135,7 @@ async function handleMessage(ws, message) {
             resources: { subscribe: false, listChanged: true },
           },
           serverInfo: {
-            name: 'US-SPURS Advanced MCP Server',
+            name: 'SPURS MCP Server',
             version: '1.0.0',
           },
         };
