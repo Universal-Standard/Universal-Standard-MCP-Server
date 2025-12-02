@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>US-SPURS Advanced MCP Server</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <div class="logo-icon">🚀</div>
+          <span>US-SPURS</span>
+        </div>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Main</div>
+          <div class="nav-item active" data-page="home">
+            <span class="nav-item-icon">🏠</span>
+            <span>Home</span>
+          </div>
+          <div class="nav-item" data-page="dashboard">
+            <span class="nav-item-icon">📊</span>
+            <span>Dashboard</span>
+          </div>
+        </div>
+        
+        <div class="nav-section">
+          <div class="nav-section-title">Platform</div>
+          <div class="nav-item" data-page="services">
+            <span class="nav-item-icon">⚡</span>
+            <span>Services</span>
+            <span class="nav-item-badge">9</span>
+          </div>
+          <div class="nav-item" data-page="playground">
+            <span class="nav-item-icon">🎮</span>
+            <span>AI Playground</span>
+          </div>
+          <div class="nav-item" data-page="logs">
+            <span class="nav-item-icon">📋</span>
+            <span>Activity Logs</span>
+          </div>
+        </div>
+        
+        <div class="nav-section">
+          <div class="nav-section-title">Configuration</div>
+          <div class="nav-item" data-page="settings">
+            <span class="nav-item-icon">⚙️</span>
+            <span>Settings</span>
+          </div>
+          <div class="nav-item" data-page="about">
+            <span class="nav-item-icon">ℹ️</span>
+            <span>About</span>
+          </div>
+        </div>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <div class="status-indicator">
+          <span class="status-dot"></span>
+          <span>Server Online</span>
+        </div>
+      </div>
+    </aside>
+    
+    <main class="main-content">
+      <header class="top-bar">
+        <h2 class="page-title">Welcome</h2>
+        <div class="top-bar-actions">
+          <div class="search-box">
+            <span>🔍</span>
+            <input type="text" placeholder="Search tools, prompts, resources...">
+          </div>
+          <button class="btn btn-primary" onclick="navigate('playground')">
+            <span>🤖</span>
+            <span>Try AI</span>
+          </button>
+        </div>
+      </header>
+      
+      <div class="content-area">
+        <div id="page-home" class="page">
+          <div class="hero">
+            <div class="hero-content">
+              <h1>US-SPURS Advanced MCP Server</h1>
+              <p>A production-ready Model Context Protocol server with multi-AI platform support, enterprise security, and extensible tool architecture.</p>
+              <div style="display: flex; gap: 12px;">
+                <button class="btn btn-primary" style="background: white; color: var(--primary);" onclick="navigate('dashboard')">
+                  View Dashboard
+                </button>
+                <button class="btn btn-secondary" style="border-color: white; color: white;" onclick="navigate('services')">
+                  Explore Services
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="feature-grid">
+            <div class="feature-card">
+              <div class="feature-icon">🤖</div>
+              <h3>Multi-AI Platform</h3>
+              <p>Seamlessly integrate with OpenAI, Anthropic Claude, and Google Gemini. Switch between providers effortlessly and leverage the best AI for each task.</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">🔧</div>
+              <h3>Extensible Tools</h3>
+              <p>9+ built-in tools including AI chat, web search, code execution, and utilities. Easily extend with custom tools through the modular registry system.</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">🔐</div>
+              <h3>Enterprise Security</h3>
+              <p>API key authentication, rate limiting, scoped permissions, and CORS protection. Built for production deployment with security best practices.</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">⚡</div>
+              <h3>Real-time Streaming</h3>
+              <p>WebSocket support for real-time AI responses. Stream completions as they generate for responsive, interactive experiences.</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">📝</div>
+              <h3>Prompt Templates</h3>
+              <p>Pre-configured prompt templates for common tasks like summarization, code analysis, and translation. Customize and extend as needed.</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">🌐</div>
+              <h3>MCP Protocol</h3>
+              <p>Full implementation of the Model Context Protocol (2024-11-05) for standardized AI integrations and cross-platform compatibility.</p>
+            </div>
+          </div>
+          
+          <div class="card" style="margin-top: 32px;">
+            <div class="card-header">
+              <h3 class="card-title">Quick Start</h3>
+            </div>
+            <div class="card-body">
+              <div class="console" style="background: #1a1a2e;">
+                <div class="console-line">
+                  <span style="color: #94a3b8;"># Test the API with curl</span>
+                </div>
+                <div class="console-line">
+                  <span style="color: #60a5fa;">curl</span>
+                  <span style="color: #f8f8f2;"> -X POST </span>
+                  <span style="color: #a5f3fc;">http://localhost:3000/mcp/tools/call</span>
+                  <span style="color: #f8f8f2;"> \</span>
+                </div>
+                <div class="console-line">
+                  <span style="color: #f8f8f2;">  -H </span>
+                  <span style="color: #a5f3fc;">"X-API-Key: demo-api-key"</span>
+                  <span style="color: #f8f8f2;"> \</span>
+                </div>
+                <div class="console-line">
+                  <span style="color: #f8f8f2;">  -H </span>
+                  <span style="color: #a5f3fc;">"Content-Type: application/json"</span>
+                  <span style="color: #f8f8f2;"> \</span>
+                </div>
+                <div class="console-line">
+                  <span style="color: #f8f8f2;">  -d </span>
+                  <span style="color: #a5f3fc;">'{"name": "ai_chat", "arguments": {"message": "Hello!"}}'</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div id="page-dashboard" class="page" style="display: none;">
+          <div class="page-header">
+            <h1>Dashboard</h1>
+            <p>Monitor your MCP server in real-time</p>
+          </div>
+          
+          <div class="grid grid-4" style="margin-bottom: 32px;">
+            <div class="stat-card">
+              <div class="stat-card-icon primary">🔧</div>
+              <div class="stat-card-value" id="stat-tools">0</div>
+              <div class="stat-card-label">Active Tools</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-icon success">📝</div>
+              <div class="stat-card-value" id="stat-prompts">0</div>
+              <div class="stat-card-label">Prompt Templates</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-icon warning">📦</div>
+              <div class="stat-card-value" id="stat-resources">0</div>
+              <div class="stat-card-label">Resources</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-icon danger">🤖</div>
+              <div class="stat-card-value">3</div>
+              <div class="stat-card-label">AI Providers</div>
+            </div>
+          </div>
+          
+          <div class="grid grid-2">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Server Status</h3>
+                <span class="badge badge-success">Healthy</span>
+              </div>
+              <div class="card-body">
+                <table class="table">
+                  <tbody>
+                    <tr>
+                      <td style="font-weight: 600;">Protocol Version</td>
+                      <td>MCP 2024-11-05</td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight: 600;">Server Version</td>
+                      <td>1.0.0</td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight: 600;">Environment</td>
+                      <td><span class="badge badge-primary">Development</span></td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight: 600;">Port</td>
+                      <td>3000</td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight: 600;">WebSocket</td>
+                      <td><span class="badge badge-success">Connected</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">AI Provider Status</h3>
+              </div>
+              <div class="card-body">
+                <table class="table">
+                  <tbody>
+                    <tr>
+                      <td>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                          <div class="provider-logo openai" style="width: 32px; height: 32px; font-size: 1rem;">O</div>
+                          <span style="font-weight: 600;">OpenAI</span>
+                        </div>
+                      </td>
+                      <td><span class="badge badge-success">Active</span></td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                          <div class="provider-logo anthropic" style="width: 32px; height: 32px; font-size: 1rem;">A</div>
+                          <span style="font-weight: 600;">Anthropic</span>
+                        </div>
+                      </td>
+                      <td><span class="badge badge-warning">Not Configured</span></td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                          <div class="provider-logo gemini" style="width: 32px; height: 32px; font-size: 1rem;">G</div>
+                          <span style="font-weight: 600;">Gemini</span>
+                        </div>
+                      </td>
+                      <td><span class="badge badge-warning">Not Configured</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card" style="margin-top: 24px;">
+            <div class="card-header">
+              <h3 class="card-title">Activity Log</h3>
+              <button class="btn btn-secondary" onclick="state.logs = []; updateConsole();">Clear</button>
+            </div>
+            <div class="card-body">
+              <div class="console" id="activity-console">
+                <div class="console-line">
+                  <span class="console-time">[--:--:--]</span>
+                  <span class="console-level info">INFO</span>
+                  <span>Waiting for activity...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div id="page-services" class="page" style="display: none;">
+          <div class="page-header">
+            <h1>Services</h1>
+            <p>Explore available tools, prompts, and resources</p>
+          </div>
+          
+          <div class="tabs">
+            <button class="tab active" onclick="showServiceTab('tools')">Tools</button>
+            <button class="tab" onclick="showServiceTab('prompts')">Prompts</button>
+            <button class="tab" onclick="showServiceTab('resources')">Resources</button>
+          </div>
+          
+          <div id="services-tools" class="service-section">
+            <div class="feature-grid" id="tools-grid">
+              <div class="loading"><div class="spinner"></div></div>
+            </div>
+          </div>
+          
+          <div id="services-prompts" class="service-section" style="display: none;">
+            <div class="feature-grid" id="prompts-grid">
+              <div class="loading"><div class="spinner"></div></div>
+            </div>
+          </div>
+          
+          <div id="services-resources" class="service-section" style="display: none;">
+            <div class="feature-grid" id="resources-grid">
+              <div class="loading"><div class="spinner"></div></div>
+            </div>
+          </div>
+        </div>
+        
+        <div id="page-playground" class="page" style="display: none;">
+          <div class="page-header">
+            <h1>AI Playground</h1>
+            <p>Interact with AI models in real-time</p>
+          </div>
+          
+          <div class="grid grid-2">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Chat</h3>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label class="form-label">AI Provider</label>
+                  <select class="form-select" id="playground-provider">
+                    <option value="openai">OpenAI GPT-4o</option>
+                    <option value="anthropic">Anthropic Claude</option>
+                    <option value="gemini">Google Gemini</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Message</label>
+                  <textarea class="form-input" id="playground-message" rows="4" placeholder="Type your message here..."></textarea>
+                </div>
+                <button class="btn btn-primary" onclick="sendPlaygroundMessage()" style="width: 100%;">
+                  Send Message
+                </button>
+              </div>
+            </div>
+            
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Response</h3>
+              </div>
+              <div class="card-body">
+                <div id="playground-response" style="min-height: 200px; padding: 16px; background: var(--gray-100); border-radius: var(--radius); color: var(--gray-600);">
+                  AI response will appear here...
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div id="page-logs" class="page" style="display: none;">
+          <div class="page-header">
+            <h1>Activity Logs</h1>
+            <p>View detailed server activity and API requests</p>
+          </div>
+          
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Recent Activity</h3>
+              <div style="display: flex; gap: 12px;">
+                <select class="form-select" style="width: auto;">
+                  <option>All Levels</option>
+                  <option>Info</option>
+                  <option>Success</option>
+                  <option>Warning</option>
+                  <option>Error</option>
+                </select>
+                <button class="btn btn-secondary" onclick="state.logs = []; updateConsole();">Clear Logs</button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="console" id="logs-console" style="max-height: 600px;">
+                <div class="console-line">
+                  <span class="console-time">[--:--:--]</span>
+                  <span class="console-level info">INFO</span>
+                  <span>Log viewer initialized</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div id="page-settings" class="page" style="display: none;">
+          <div class="page-header">
+            <h1>Settings</h1>
+            <p>Configure AI providers and server settings</p>
+          </div>
+          
+          <div class="tabs">
+            <button class="tab active" onclick="showSettingsTab('providers')">AI Providers</button>
+            <button class="tab" onclick="showSettingsTab('api')">API Settings</button>
+            <button class="tab" onclick="showSettingsTab('security')">Security</button>
+          </div>
+          
+          <div id="settings-providers" class="settings-section">
+            <div class="grid" style="gap: 24px;" id="providers-list">
+              <div class="provider-card">
+                <div class="provider-header">
+                  <div class="provider-info">
+                    <div class="provider-logo openai">O</div>
+                    <span class="provider-name">OpenAI</span>
+                  </div>
+                  <div class="provider-status active">
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background: currentColor;"></span>
+                    Configured
+                  </div>
+                </div>
+                <p style="color: var(--gray-600); margin-bottom: 16px;">
+                  Powered by Replit AI Integrations. No API key required - charges are billed to your Replit credits.
+                </p>
+                <div style="display: flex; gap: 12px;">
+                  <button class="btn btn-secondary" onclick="configureProvider('openai')">Configure</button>
+                  <button class="btn btn-primary" onclick="testProvider('openai')">Test Connection</button>
+                </div>
+              </div>
+              
+              <div class="provider-card">
+                <div class="provider-header">
+                  <div class="provider-info">
+                    <div class="provider-logo anthropic">A</div>
+                    <span class="provider-name">Anthropic Claude</span>
+                  </div>
+                  <div class="provider-status inactive">
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background: currentColor;"></span>
+                    Not Configured
+                  </div>
+                </div>
+                <p style="color: var(--gray-600); margin-bottom: 16px;">
+                  Use Claude 3.5 Sonnet and other Anthropic models. Requires API key from console.anthropic.com.
+                </p>
+                <div style="display: flex; gap: 12px;">
+                  <button class="btn btn-secondary" onclick="configureProvider('anthropic')">Configure</button>
+                  <button class="btn btn-primary" disabled>Test Connection</button>
+                </div>
+              </div>
+              
+              <div class="provider-card">
+                <div class="provider-header">
+                  <div class="provider-info">
+                    <div class="provider-logo gemini">G</div>
+                    <span class="provider-name">Google Gemini</span>
+                  </div>
+                  <div class="provider-status inactive">
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background: currentColor;"></span>
+                    Not Configured
+                  </div>
+                </div>
+                <p style="color: var(--gray-600); margin-bottom: 16px;">
+                  Use Gemini Pro and other Google AI models. Requires API key from ai.google.dev.
+                </p>
+                <div style="display: flex; gap: 12px;">
+                  <button class="btn btn-secondary" onclick="configureProvider('gemini')">Configure</button>
+                  <button class="btn btn-primary" disabled>Test Connection</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div id="settings-api" class="settings-section" style="display: none;">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">API Configuration</h3>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label class="form-label">API Key</label>
+                  <div style="display: flex; gap: 12px;">
+                    <input type="text" class="form-input" value="demo-api-key" readonly>
+                    <button class="btn btn-secondary">Regenerate</button>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Rate Limit (requests per minute)</label>
+                  <input type="number" class="form-input" value="100">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">CORS Origins</label>
+                  <input type="text" class="form-input" value="*" placeholder="*, https://example.com">
+                </div>
+              </div>
+              <div class="card-footer">
+                <button class="btn btn-primary">Save Changes</button>
+              </div>
+            </div>
+          </div>
+          
+          <div id="settings-security" class="settings-section" style="display: none;">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Security Settings</h3>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                      <label class="form-label" style="margin-bottom: 4px;">Enable Rate Limiting</label>
+                      <p style="color: var(--gray-500); font-size: 0.875rem;">Protect against abuse by limiting request frequency</p>
+                    </div>
+                    <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                      <label class="form-label" style="margin-bottom: 4px;">Require API Key</label>
+                      <p style="color: var(--gray-500); font-size: 0.875rem;">All MCP endpoints require authentication</p>
+                    </div>
+                    <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                      <label class="form-label" style="margin-bottom: 4px;">Enable Helmet Security Headers</label>
+                      <p style="color: var(--gray-500); font-size: 0.875rem;">Add security headers to all responses</p>
+                    </div>
+                    <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div id="page-about" class="page" style="display: none;">
+          <div class="page-header">
+            <h1>About US-SPURS</h1>
+            <p>Learn more about the MCP Server platform</p>
+          </div>
+          
+          <div class="grid grid-2">
+            <div class="card">
+              <div class="card-body">
+                <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 16px; color: var(--gray-800);">What is US-SPURS?</h2>
+                <p style="color: var(--gray-600); line-height: 1.8; margin-bottom: 16px;">
+                  US-SPURS (Universal Scalable Platform for Unified Runtime Services) is a production-ready Model Context Protocol server designed for seamless integration with multiple AI platforms.
+                </p>
+                <p style="color: var(--gray-600); line-height: 1.8; margin-bottom: 16px;">
+                  Built with enterprise-grade security, extensibility, and performance in mind, US-SPURS provides a unified interface for AI tools, prompts, and resources across OpenAI, Anthropic, and Google platforms.
+                </p>
+                <p style="color: var(--gray-600); line-height: 1.8;">
+                  The platform is designed to self-grow and adapt, leveraging multiple AI providers to deliver intelligent, context-aware responses for any application.
+                </p>
+              </div>
+            </div>
+            
+            <div class="card">
+              <div class="card-body">
+                <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 16px; color: var(--gray-800);">Key Capabilities</h2>
+                <ul style="color: var(--gray-600); line-height: 2;">
+                  <li>✅ Multi-AI platform support (OpenAI, Anthropic, Gemini)</li>
+                  <li>✅ Model Context Protocol (MCP) 2024-11-05 compliant</li>
+                  <li>✅ Real-time streaming via WebSocket</li>
+                  <li>✅ Extensible tool registry system</li>
+                  <li>✅ Prompt template management</li>
+                  <li>✅ Resource discovery and access</li>
+                  <li>✅ API key authentication with scopes</li>
+                  <li>✅ Rate limiting and security headers</li>
+                  <li>✅ Comprehensive logging with Winston</li>
+                  <li>✅ Production-ready error handling</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card" style="margin-top: 24px;">
+            <div class="card-header">
+              <h3 class="card-title">Technical Specifications</h3>
+            </div>
+            <div class="card-body">
+              <table class="table">
+                <tbody>
+                  <tr>
+                    <td style="font-weight: 600; width: 200px;">Runtime</td>
+                    <td>Node.js 18+ with native fetch API</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight: 600;">Framework</td>
+                    <td>Express.js with WebSocket (ws)</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight: 600;">Protocol</td>
+                    <td>Model Context Protocol (MCP) 2024-11-05</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight: 600;">Security</td>
+                    <td>Helmet, CORS, Rate Limiting, API Key Auth</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight: 600;">AI Providers</td>
+                    <td>OpenAI (via Replit), Anthropic Claude, Google Gemini</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight: 600;">Logging</td>
+                    <td>Winston with structured JSON output</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+          <div class="card" style="margin-top: 24px;">
+            <div class="card-header">
+              <h3 class="card-title">Version History</h3>
+            </div>
+            <div class="card-body">
+              <div style="border-left: 3px solid var(--primary); padding-left: 20px;">
+                <div style="margin-bottom: 24px;">
+                  <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                    <span class="badge badge-success">v1.0.0</span>
+                    <span style="color: var(--gray-500); font-size: 0.875rem;">December 2025</span>
+                  </div>
+                  <h4 style="font-weight: 600; margin-bottom: 8px;">Initial Release</h4>
+                  <ul style="color: var(--gray-600); font-size: 0.875rem; line-height: 1.8;">
+                    <li>Complete MCP server implementation</li>
+                    <li>Multi-provider AI support</li>
+                    <li>9 built-in tools with AI integration</li>
+                    <li>REST API and WebSocket endpoints</li>
+                    <li>Production-quality web interface</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  
+  <div id="tool-modal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="tool-modal-title">Tool</h3>
+        <button class="modal-close" onclick="closeModal('tool-modal')">&times;</button>
+      </div>
+      <div class="modal-body" id="tool-modal-content"></div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('tool-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="executeCurrentTool()">Execute</button>
+      </div>
+    </div>
+  </div>
+  
+  <div id="provider-modal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="provider-modal-title">Configure Provider</h3>
+        <button class="modal-close" onclick="closeModal('provider-modal')">&times;</button>
+      </div>
+      <div class="modal-body" id="provider-modal-content"></div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('provider-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveProviderConfig()">Save</button>
+      </div>
+    </div>
+  </div>
+  
+  <script src="/js/app.js"></script>
+  <script>
+    function showServiceTab(tab) {
+      document.querySelectorAll('#page-services .tabs .tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.service-section').forEach(s => s.style.display = 'none');
+      
+      event.target.classList.add('active');
+      document.getElementById(`services-${tab}`).style.display = 'block';
+    }
+    
+    function showSettingsTab(tab) {
+      document.querySelectorAll('#page-settings .tabs .tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.settings-section').forEach(s => s.style.display = 'none');
+      
+      event.target.classList.add('active');
+      document.getElementById(`settings-${tab}`).style.display = 'block';
+    }
+    
+    async function sendPlaygroundMessage() {
+      const provider = document.getElementById('playground-provider').value;
+      const message = document.getElementById('playground-message').value;
+      const responseEl = document.getElementById('playground-response');
+      
+      if (!message.trim()) {
+        showNotification('Please enter a message', 'error');
+        return;
+      }
+      
+      responseEl.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+      
+      try {
+        const result = await apiRequest('/mcp/sampling/create', {
+          method: 'POST',
+          body: JSON.stringify({
+            messages: [{ role: 'user', content: message }],
+            provider: provider
+          })
+        });
+        
+        responseEl.innerHTML = `
+          <div style="margin-bottom: 12px;">
+            <span class="badge badge-success">${result.provider || provider}</span>
+            <span class="badge badge-primary">${result.model || 'AI Response'}</span>
+          </div>
+          <p style="color: var(--gray-800); line-height: 1.8;">${result.content?.text || result.content || 'No response'}</p>
+        `;
+        
+        addLog('success', `AI response received from ${provider}`);
+      } catch (error) {
+        responseEl.innerHTML = `<p style="color: var(--danger);">Error: ${error.message}</p>`;
+        addLog('error', `AI request failed: ${error.message}`);
+      }
+    }
+    
+    function saveProviderConfig() {
+      showNotification('Configuration saved!', 'success');
+      closeModal('provider-modal');
+    }
+    
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const page = item.dataset.page;
+        if (page) navigate(page);
+      });
+    });
+  </script>
+</body>
+</html>

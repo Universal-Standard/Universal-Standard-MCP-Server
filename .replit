@@ -34,11 +34,12 @@ name = "Start App"
 author = "agent"
 
 [workflows.workflow.metadata]
-outputType = "console"
+outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "node index.js"
+waitForPort = 5000
 
 [[ports]]
 localPort = 3000
@@ -49,5 +50,5 @@ localPort = 5000
 externalPort = 80
 
 [[ports]]
-localPort = 34875
+localPort = 33341
 externalPort = 3001
