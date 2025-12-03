@@ -6,7 +6,7 @@ class OpenAIProvider {
   constructor() {
     this.client = new OpenAI({
       baseURL: config.ai.openai.baseURL,
-      apiKey: config.ai.openai.apiKey,
+      apiKey: config.ai.OPENAI_API_KEY,
 
     });
     this.name = 'openai';
