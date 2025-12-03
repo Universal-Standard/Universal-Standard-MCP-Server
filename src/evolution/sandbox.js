@@ -1,16 +1,50 @@
+/**
+ * Tool Sandbox
+ * Secure isolated execution environment for testing generated tools
+ * Features:
+ * - Network access blocked (fetch, HTTP, WebSocket)
+ * - Filesystem access blocked
+ * - Timer APIs restricted
+ * - Dangerous APIs blocked (eval, Function constructor)
+ * - Resource limits enforced
+ */
 const vm = require('vm');
 const { v4: uuidv4 } = require('uuid');
 const logger = require('../utils/logger');
 
+const DEFAULT_TIMEOUT = 5000;
+const MAX_TIMEOUT = 30000;
+const MAX_MEMORY = 50 * 1024 * 1024;
+
+/**
+ * @class ToolSandbox
+ * Provides secure execution environment for tool testing
+ */
 class ToolSandbox {
-  constructor() {
-    this.defaultTimeout = 5000;
-    this.maxMemory = 50 * 1024 * 1024;
+  constructor(options = {}) {
+    this.defaultTimeout = options.timeout || DEFAULT_TIMEOUT;
+    this.maxMemory = options.maxMemory || MAX_MEMORY;
   }
 
+  /**
+   * Test a generated tool in the sandbox
+   * @param {Object} tool - Tool definition with handlerCode
+   * @param {Array} testCases - Optional test cases
+   * @returns {Promise<Object>} Test results
+   */
   async test(tool, testCases = []) {
     const startTime = Date.now();
     const testId = uuidv4();
+    
+    if (!tool || !tool.handlerCode) {
+      return {
+        testId,
+        toolName: tool?.name || 'unknown',
+        passed: false,
+        error: 'Invalid tool: missing handlerCode',
+        duration: 0,
+      };
+    }
     
     logger.info('Sandbox testing started', { toolName: tool.name, testId });
     
@@ -67,7 +101,23 @@ class ToolSandbox {
     }
   }
 
+  /**
+   * Perform security scan on handler code
+   * @param {string} handlerCode - Code to scan
+   * @returns {Object} Security scan results
+   */
   performSecurityScan(handlerCode) {
+    if (!handlerCode || typeof handlerCode !== 'string') {
+      return {
+        passed: false,
+        issues: [{ name: 'Invalid code', severity: 'critical' }],
+        criticalCount: 1,
+        highCount: 0,
+        mediumCount: 0,
+        lowCount: 0,
+      };
+    }
+    
     const issues = [];
     
     const dangerousPatterns = [

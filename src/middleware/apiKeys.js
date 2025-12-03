@@ -13,6 +13,7 @@ const VALID_SCOPES = [
   'prompts:write',
   'resources:read',
   'resources:write',
+  'sampling',
   'sampling:create',
   'settings:read',
   'settings:write',

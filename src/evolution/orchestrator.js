@@ -1,3 +1,8 @@
+/**
+ * Evolution Orchestrator
+ * Coordinates the tool auto-evolution process:
+ * Discovery -> Generation -> Testing -> Registration
+ */
 const { v4: uuidv4 } = require('uuid');
 const logger = require('../utils/logger');
 const { storage } = require('../../server/storage');
@@ -6,6 +11,12 @@ const { PostmanDiscovery } = require('./discovery/postman');
 const { ToolGenerator } = require('./generator');
 const { ToolSandbox } = require('./sandbox');
 
+const MAX_CONCURRENT_EVOLUTIONS = 5;
+
+/**
+ * @class EvolutionOrchestrator
+ * Manages the end-to-end tool evolution process
+ */
 class EvolutionOrchestrator {
   constructor() {
     this.githubDiscovery = new GitHubDiscovery();
@@ -16,22 +27,49 @@ class EvolutionOrchestrator {
     this.activeEvolutions = new Map();
   }
 
+  /**
+   * Evolve a new tool from discovered implementations
+   * @param {string} toolName - Name of the tool to create
+   * @param {Object} options - Evolution options
+   * @param {string} options.description - Tool description for AI
+   * @param {Array} options.examples - Example inputs/outputs
+   * @param {string} options.category - Tool category
+   * @returns {Promise<Object>} Evolution result
+   */
   async evolve(toolName, options = {}) {
     const evolutionId = uuidv4();
     const startTime = Date.now();
     
-    logger.info('Evolution started', { evolutionId, toolName });
-    
-    if (this.activeEvolutions.has(toolName)) {
-      logger.warn('Evolution already in progress for tool', { toolName });
+    if (!toolName || typeof toolName !== 'string') {
       return {
         success: false,
-        error: `Evolution already in progress for ${toolName}`,
-        evolutionId: this.activeEvolutions.get(toolName)
+        error: 'Tool name is required',
+        evolutionId,
       };
     }
     
-    this.activeEvolutions.set(toolName, evolutionId);
+    const sanitizedName = toolName.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_');
+    
+    logger.info('Evolution started', { evolutionId, toolName: sanitizedName });
+    
+    if (this.activeEvolutions.has(sanitizedName)) {
+      logger.warn('Evolution already in progress for tool', { toolName: sanitizedName });
+      return {
+        success: false,
+        error: `Evolution already in progress for ${sanitizedName}`,
+        evolutionId: this.activeEvolutions.get(sanitizedName),
+      };
+    }
+    
+    if (this.activeEvolutions.size >= MAX_CONCURRENT_EVOLUTIONS) {
+      return {
+        success: false,
+        error: `Maximum concurrent evolutions (${MAX_CONCURRENT_EVOLUTIONS}) reached`,
+        evolutionId,
+      };
+    }
+    
+    this.activeEvolutions.set(sanitizedName, evolutionId);
     
     try {
       await this.logStage(toolName, 'started', 'in_progress', { evolutionId, options });
