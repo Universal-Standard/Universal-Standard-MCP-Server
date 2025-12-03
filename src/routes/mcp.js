@@ -30,22 +30,27 @@ router.get('/tools/:name', requireScope('tools:read'), (req, res) => {
 });
 
 router.post('/tools/call', requireScope('tools:execute'), async (req, res) => {
-  const { name, arguments: args } = req.body;
+  const { name, arguments: args, autoEvolve = false } = req.body;
   
   if (!name) {
     return res.status(400).json({ error: 'Tool name is required' });
-  }
-  
-  const tool = registry.get(name);
-  if (!tool) {
-    return res.status(404).json({ error: `Tool not found: ${name}` });
   }
   
   try {
     const result = await registry.execute(name, args || {}, {
       user: req.apiKeyData,
       requestId: req.headers['x-request-id'],
+      description: req.body.description,
+      autoEvolve
     });
+    
+    if (result._evolution?.newTool) {
+      logger.info('Auto-evolved new tool', { 
+        name, 
+        evolutionId: result._evolution.evolutionId,
+        duration: result._evolution.duration 
+      });
+    }
     
     res.json(result);
   } catch (error) {
@@ -60,6 +65,11 @@ router.post('/tools/call', requireScope('tools:execute'), async (req, res) => {
       isError: true,
     });
   }
+});
+
+router.get('/tools/stats', requireScope('tools:read'), (req, res) => {
+  const stats = registry.getStats();
+  res.json(stats);
 });
 
 router.get('/prompts', requireScope('prompts:read'), (req, res) => {

@@ -334,4 +334,131 @@ router.get('/chat/sessions', requireScope('settings:read'), async (req, res) => 
   }
 });
 
+router.get('/generated-tools', requireScope('settings:read'), async (req, res) => {
+  const { status } = req.query;
+  
+  try {
+    const tools = await storage.getGeneratedTools(status || null);
+    res.json({ 
+      tools: tools.map(t => ({
+        id: t.id,
+        name: t.name,
+        description: t.description,
+        category: t.category,
+        sourceType: t.sourceType,
+        sourceUrl: t.sourceUrl,
+        version: t.version,
+        status: t.status,
+        usageCount: t.usageCount,
+        createdAt: t.createdAt,
+        updatedAt: t.updatedAt
+      })),
+      count: tools.length 
+    });
+  } catch (error) {
+    logger.error('Failed to get generated tools', { error: error.message });
+    res.status(500).json({ error: 'Failed to get generated tools' });
+  }
+});
+
+router.get('/generated-tools/:id', requireScope('settings:read'), async (req, res) => {
+  const { id } = req.params;
+  
+  try {
+    const tool = await storage.getGeneratedToolById(parseInt(id));
+    if (!tool) {
+      return res.status(404).json({ error: 'Generated tool not found' });
+    }
+    
+    res.json({
+      ...tool,
+      handlerCode: undefined
+    });
+  } catch (error) {
+    logger.error('Failed to get generated tool', { error: error.message });
+    res.status(500).json({ error: 'Failed to get generated tool' });
+  }
+});
+
+router.delete('/generated-tools/:id', requireScope('settings:write'), async (req, res) => {
+  const { id } = req.params;
+  
+  try {
+    const result = await storage.deleteGeneratedTool(parseInt(id));
+    if (!result) {
+      return res.status(404).json({ error: 'Generated tool not found' });
+    }
+    
+    const { dynamicRegistry } = require('../evolution/registry');
+    await dynamicRegistry.unregisterTool(result.name);
+    
+    await storage.logActivity('generated_tool', 'disabled', { id: parseInt(id), name: result.name }, null, req.ip);
+    
+    res.json({ success: true, message: 'Generated tool disabled' });
+  } catch (error) {
+    logger.error('Failed to disable generated tool', { error: error.message });
+    res.status(500).json({ error: 'Failed to disable generated tool' });
+  }
+});
+
+router.get('/tool-creation-logs', requireScope('settings:read'), async (req, res) => {
+  const { toolName, limit = 100 } = req.query;
+  
+  try {
+    const logs = await storage.getToolCreationLogs(toolName || null, parseInt(limit));
+    res.json({ logs, count: logs.length });
+  } catch (error) {
+    logger.error('Failed to get tool creation logs', { error: error.message });
+    res.status(500).json({ error: 'Failed to get tool creation logs' });
+  }
+});
+
+router.get('/audit/export', requireScope('settings:read'), async (req, res) => {
+  const { format = 'json', limit = 1000, type } = req.query;
+  
+  try {
+    const logs = await storage.getActivityLogs(parseInt(limit), 0, type || null);
+    
+    if (format === 'csv') {
+      const csv = logs.map(log => [
+        log.id,
+        log.type,
+        log.action,
+        JSON.stringify(log.details),
+        log.ipAddress || '',
+        log.timestamp
+      ].join(',')).join('\n');
+      
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename=audit-logs.csv');
+      res.send('id,type,action,details,ip_address,timestamp\n' + csv);
+    } else {
+      res.setHeader('Content-Disposition', 'attachment; filename=audit-logs.json');
+      res.json(logs);
+    }
+  } catch (error) {
+    logger.error('Failed to export audit logs', { error: error.message });
+    res.status(500).json({ error: 'Failed to export audit logs' });
+  }
+});
+
+router.post('/generated-tools/:id/reload', requireScope('settings:write'), async (req, res) => {
+  const { id } = req.params;
+  
+  try {
+    const tool = await storage.getGeneratedToolById(parseInt(id));
+    if (!tool) {
+      return res.status(404).json({ error: 'Generated tool not found' });
+    }
+    
+    const { dynamicRegistry } = require('../evolution/registry');
+    await dynamicRegistry.registerTool(tool);
+    
+    res.json({ success: true, message: 'Tool reloaded successfully' });
+  } catch (error) {
+    logger.error('Failed to reload generated tool', { error: error.message });
+    res.status(500).json({ error: 'Failed to reload generated tool' });
+  }
+});
+
 module.exports = router;

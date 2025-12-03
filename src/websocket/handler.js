@@ -11,7 +11,7 @@ const logger = require('../utils/logger');
 function setupWebSocket(server) {
   const wss = new WebSocket.Server({ noServer: true });
   
-  server.on('upgrade', (request, socket, head) => {
+  server.on('upgrade', async (request, socket, head) => {
     const pathname = url.parse(request.url).pathname;
     
     if (pathname !== '/ws') {
@@ -20,29 +20,34 @@ function setupWebSocket(server) {
       return;
     }
     
-    const parsedUrl = url.parse(request.url, true);
-    const apiKey = parsedUrl.query.apiKey || request.headers['x-api-key'];
+    const apiKey = request.headers['x-api-key'];
     
     if (!apiKey) {
-      logger.warn('WebSocket connection rejected: No API key', { ip: socket.remoteAddress });
-      socket.write('HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\n\r\nAPI key required. Pass ?apiKey=YOUR_KEY or X-API-Key header');
+      logger.warn('WebSocket connection rejected: No API key in header', { ip: socket.remoteAddress });
+      socket.write('HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\n\r\nAPI key required in X-API-Key header');
       socket.destroy();
       return;
     }
     
-    const keyData = validateApiKey(apiKey);
-    if (!keyData) {
-      logger.warn('WebSocket connection rejected: Invalid API key', { ip: socket.remoteAddress });
-      socket.write('HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\n\r\nInvalid API key');
+    try {
+      const keyData = await validateApiKey(apiKey);
+      if (!keyData) {
+        logger.warn('WebSocket connection rejected: Invalid API key', { ip: socket.remoteAddress });
+        socket.write('HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\n\r\nInvalid API key');
+        socket.destroy();
+        return;
+      }
+      
+      request.apiKeyData = keyData;
+      
+      wss.handleUpgrade(request, socket, head, (ws) => {
+        wss.emit('connection', ws, request);
+      });
+    } catch (error) {
+      logger.error('WebSocket auth error', { error: error.message });
+      socket.write('HTTP/1.1 500 Internal Server Error\r\n\r\n');
       socket.destroy();
-      return;
     }
-    
-    request.apiKeyData = keyData;
-    
-    wss.handleUpgrade(request, socket, head, (ws) => {
-      wss.emit('connection', ws, request);
-    });
   });
   
   wss.on('connection', (ws, req) => {

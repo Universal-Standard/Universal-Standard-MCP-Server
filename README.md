@@ -751,6 +751,6 @@ This software is classified as OFFICIAL USE ONLY and is restricted to authorized
 
 **SPURS MCP Server** - Self-Evolving AI Infrastructure
 
-*Building the future of AI tool orchestration*
+*Always Prepared. Prepare Always.*
 
 </div>

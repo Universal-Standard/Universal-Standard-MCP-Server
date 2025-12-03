@@ -12,8 +12,13 @@ const logger = require('./src/utils/logger');
 const { validateApiKey } = require('./src/middleware/auth');
 const { errorHandler, notFoundHandler } = require('./src/middleware/errorHandler');
 const { setupWebSocket } = require('./src/websocket/handler');
+const { registry } = require('./src/mcp/toolRegistry');
 
 require('./src/tools');
+
+registry.initialize().catch(err => {
+  logger.warn('Failed to initialize dynamic tool registry', { error: err.message });
+});
 
 const mcpRoutes = require('./src/routes/mcp');
 const healthRoutes = require('./src/routes/health');

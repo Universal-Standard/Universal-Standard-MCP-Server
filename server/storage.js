@@ -1,7 +1,7 @@
-const { eq, desc, and } = require('drizzle-orm');
+const { eq, desc, and, sql } = require('drizzle-orm');
 const { db } = require('./db');
-const { apiKeys, providerSettings, serverSettings, activityLogs, chatHistory } = require('../shared/schema');
-const crypto = require('crypto');
+const { apiKeys, providerSettings, serverSettings, activityLogs, chatHistory, generatedTools, toolCreationLogs } = require('../shared/schema');
+const { encrypt, decrypt, hashApiKey, generateApiKey, getKeyPrefix } = require('../src/utils/encryption');
 
 class DatabaseStorage {
   async getApiKeys() {
@@ -9,11 +9,12 @@ class DatabaseStorage {
     return keys.map(k => ({
       id: k.id,
       name: k.name,
-      keyPreview: k.key ? `${k.key.substring(0, 8)}...${k.key.substring(k.key.length - 4)}` : null,
+      keyPrefix: k.keyPrefix,
       scopes: k.scopes,
       rateLimit: k.rateLimit,
       createdAt: k.createdAt,
-      lastUsedAt: k.lastUsedAt
+      lastUsedAt: k.lastUsedAt,
+      expiresAt: k.expiresAt
     }));
   }
 
@@ -22,25 +23,36 @@ class DatabaseStorage {
     return key;
   }
 
-  async getApiKeyByKey(key) {
-    const [apiKey] = await db.select().from(apiKeys).where(eq(apiKeys.key, key));
+  async getApiKeyByKey(rawKey) {
+    const keyHash = hashApiKey(rawKey);
+    const [apiKey] = await db.select().from(apiKeys).where(eq(apiKeys.keyHash, keyHash));
     return apiKey;
   }
 
   async createApiKey(data) {
-    const key = `mcp_${crypto.randomBytes(24).toString('hex')}`;
+    const rawKey = generateApiKey();
+    const keyHash = hashApiKey(rawKey);
+    const keyPrefix = getKeyPrefix(rawKey);
+    
     const [apiKey] = await db.insert(apiKeys).values({
-      key,
+      keyHash,
+      keyPrefix,
       name: data.name,
       scopes: data.scopes || ['tools:read', 'tools:execute', 'prompts:read', 'resources:read', 'sampling'],
       rateLimit: data.rateLimit || 100,
+      expiresAt: data.expiresAt || null,
     }).returning();
-    return apiKey;
+    
+    return { ...apiKey, key: rawKey };
   }
 
   async updateApiKey(id, data) {
+    const updateData = { ...data };
+    delete updateData.key;
+    delete updateData.keyHash;
+    
     const [apiKey] = await db.update(apiKeys)
-      .set({ ...data })
+      .set(updateData)
       .where(eq(apiKeys.id, id))
       .returning();
     return apiKey;
@@ -61,28 +73,50 @@ class DatabaseStorage {
   }
 
   async getProviderSettings() {
-    return await db.select().from(providerSettings);
+    const settings = await db.select().from(providerSettings);
+    return settings.map(s => ({
+      ...s,
+      apiKey: s.encryptedApiKey ? decrypt(s.encryptedApiKey) : null
+    }));
   }
 
   async getProviderSetting(provider) {
     const [setting] = await db.select().from(providerSettings).where(eq(providerSettings.provider, provider));
+    if (setting) {
+      return {
+        ...setting,
+        apiKey: setting.encryptedApiKey ? decrypt(setting.encryptedApiKey) : null
+      };
+    }
     return setting;
   }
 
   async upsertProviderSetting(provider, data) {
+    const updateData = { ...data };
+    if (data.apiKey) {
+      updateData.encryptedApiKey = encrypt(data.apiKey);
+      delete updateData.apiKey;
+    }
+    
     const existing = await this.getProviderSetting(provider);
     if (existing) {
       const [setting] = await db.update(providerSettings)
-        .set({ ...data, updatedAt: new Date() })
+        .set({ ...updateData, updatedAt: new Date() })
         .where(eq(providerSettings.provider, provider))
         .returning();
-      return setting;
+      return {
+        ...setting,
+        apiKey: setting.encryptedApiKey ? decrypt(setting.encryptedApiKey) : null
+      };
     } else {
       const [setting] = await db.insert(providerSettings).values({
         provider,
-        ...data,
+        ...updateData,
       }).returning();
-      return setting;
+      return {
+        ...setting,
+        apiKey: setting.encryptedApiKey ? decrypt(setting.encryptedApiKey) : null
+      };
     }
   }
 
@@ -162,6 +196,95 @@ class DatabaseStorage {
       .orderBy(desc(chatHistory.createdAt))
       .limit(limit);
     return sessions.map(s => s.sessionId);
+  }
+
+  async getGeneratedTools(status = 'active') {
+    if (status) {
+      return await db.select().from(generatedTools).where(eq(generatedTools.status, status)).orderBy(desc(generatedTools.createdAt));
+    }
+    return await db.select().from(generatedTools).orderBy(desc(generatedTools.createdAt));
+  }
+
+  async getGeneratedTool(name) {
+    const [tool] = await db.select().from(generatedTools).where(eq(generatedTools.name, name));
+    return tool;
+  }
+
+  async getGeneratedToolById(id) {
+    const [tool] = await db.select().from(generatedTools).where(eq(generatedTools.id, id));
+    return tool;
+  }
+
+  async createGeneratedTool(data) {
+    const [tool] = await db.insert(generatedTools).values({
+      name: data.name,
+      description: data.description,
+      category: data.category || 'generated',
+      inputSchema: data.inputSchema,
+      handlerCode: data.handlerCode,
+      sourceType: data.sourceType,
+      sourceUrl: data.sourceUrl || null,
+      sourceData: data.sourceData || {},
+      version: 1,
+      status: data.status || 'active',
+      testResults: data.testResults || {},
+      securityScan: data.securityScan || {},
+    }).returning();
+    return tool;
+  }
+
+  async updateGeneratedTool(id, data) {
+    const updateData = { ...data, updatedAt: new Date() };
+    const [tool] = await db.update(generatedTools)
+      .set(updateData)
+      .where(eq(generatedTools.id, id))
+      .returning();
+    return tool;
+  }
+
+  async incrementToolUsage(id) {
+    await db.update(generatedTools)
+      .set({ 
+        usageCount: sql`${generatedTools.usageCount} + 1`,
+        lastUsedAt: new Date() 
+      })
+      .where(eq(generatedTools.id, id));
+  }
+
+  async deleteGeneratedTool(id) {
+    const [tool] = await db.update(generatedTools)
+      .set({ status: 'disabled' })
+      .where(eq(generatedTools.id, id))
+      .returning();
+    return tool;
+  }
+
+  async logToolCreation(toolName, stage, status, details = {}, aiPromptUsed = null, aiResponse = null, duration = null, toolId = null) {
+    const [log] = await db.insert(toolCreationLogs).values({
+      toolId,
+      toolName,
+      stage,
+      status,
+      details,
+      aiPromptUsed,
+      aiResponse,
+      duration,
+    }).returning();
+    return log;
+  }
+
+  async getToolCreationLogs(toolName = null, limit = 100) {
+    if (toolName) {
+      return await db.select()
+        .from(toolCreationLogs)
+        .where(eq(toolCreationLogs.toolName, toolName))
+        .orderBy(desc(toolCreationLogs.createdAt))
+        .limit(limit);
+    }
+    return await db.select()
+      .from(toolCreationLogs)
+      .orderBy(desc(toolCreationLogs.createdAt))
+      .limit(limit);
   }
 }
 
