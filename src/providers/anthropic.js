@@ -7,6 +7,10 @@ class AnthropicProvider {
     this.name = 'anthropic';
     this.baseURL = 'https://api.anthropic.com/v1';
   }
+  
+  isConfigured() {
+    return !!this.apiKey;
+  }
 
   async chat(messages, options = {}) {
     if (!this.isConfigured()) {

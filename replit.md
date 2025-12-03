@@ -201,6 +201,24 @@ PostgreSQL (Neon-backed) with Drizzle ORM:
 
 ## Recent Changes
 
+- 2025-12-03: Production-quality refactoring of apiKeys.js middleware
+  - Implemented LRU cache with max size limit (1000 keys) to prevent memory leaks
+  - Added comprehensive input validation for name, scopes, and rate limits
+  - Created scope validation against VALID_SCOPES list (10 scopes defined)
+  - Improved security: proper key masking using getKeyPrefix() from encryption utility
+  - Added JSDoc documentation for all functions
+  - Extracted constants and configuration to top of file
+  - Error handling improvements: no fallback to demo key on errors
+  - New cache utility functions: clearCache(), getCacheStats()
+  - Rate limit range validation (1-10000)
+
+- 2025-12-03: Fixed provider initialization for production
+  - OpenAI, Anthropic, and Gemini providers now gracefully handle missing API keys
+  - Lazy initialization with try-catch error handling
+  - Added isConfigured() method to all providers
+  - Server starts successfully even when API keys are not configured
+  - Proper error messages when attempting to use unconfigured providers
+
 - 2025-12-03: Complete architecture documentation
   - Updated README.md with full end-state architecture
   - Documented auto-evolution engine flow

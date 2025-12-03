@@ -4,15 +4,32 @@ const logger = require('../utils/logger');
 
 class OpenAIProvider {
   constructor() {
-    this.client = new OpenAI({
-      baseURL: config.ai.openai.baseURL,
-      apiKey: config.ai.OPENAI_API_KEY,
-
-    });
     this.name = 'openai';
+    this.client = null;
+    this._initialized = false;
+    
+    try {
+      if (config.ai.OPENAI_API_KEY) {
+        this.client = new OpenAI({
+          baseURL: config.ai.openai.baseURL,
+          apiKey: config.ai.OPENAI_API_KEY,
+        });
+        this._initialized = true;
+      }
+    } catch (error) {
+      logger.warn('Failed to initialize OpenAI provider', { error: error.message });
+    }
+  }
+  
+  isConfigured() {
+    return this._initialized && this.client !== null;
   }
 
   async chat(messages, options = {}) {
+    if (!this.isConfigured()) {
+      throw new Error('OpenAI provider not configured - missing OPENAI_API_KEY');
+    }
+    
     const model = options.model || config.ai.openai.defaultModel;
     
     logger.info('OpenAI chat request', { model, messageCount: messages.length });
@@ -42,6 +59,10 @@ class OpenAIProvider {
   }
 
   async *chatStream(messages, options = {}) {
+    if (!this.isConfigured()) {
+      throw new Error('OpenAI provider not configured - missing OPENAI_API_KEY');
+    }
+    
     const model = options.model || config.ai.openai.defaultModel;
     
     const stream = await this.client.chat.completions.create({

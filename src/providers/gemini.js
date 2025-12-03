@@ -7,6 +7,10 @@ class GeminiProvider {
     this.name = 'gemini';
     this.baseURL = 'https://generativelanguage.googleapis.com/v1beta';
   }
+  
+  isConfigured() {
+    return !!this.apiKey;
+  }
 
   async chat(messages, options = {}) {
     if (!this.isConfigured()) {
