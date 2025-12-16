@@ -1,5 +1,66 @@
 const API_BASE = '';
-const API_KEY = 'demo-api-key';
+let API_KEY = localStorage.getItem('spurs_api_key') || 'demo-api-key';
+
+function toggleMobileMenu() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.querySelector('.sidebar-overlay');
+  sidebar.classList.toggle('open');
+  overlay.classList.toggle('active');
+}
+
+function closeMobileMenu() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.querySelector('.sidebar-overlay');
+  sidebar.classList.remove('open');
+  overlay.classList.remove('active');
+}
+
+function setApiKey(key) {
+  if (key && key.trim()) {
+    API_KEY = key.trim();
+    localStorage.setItem('spurs_api_key', API_KEY);
+    showToast('API key updated', 'success');
+    refreshData();
+  }
+}
+
+function clearApiKey() {
+  API_KEY = 'demo-api-key';
+  localStorage.removeItem('spurs_api_key');
+  showToast('API key cleared, using demo key', 'info');
+}
+
+async function refreshData() {
+  await Promise.all([
+    loadTools(),
+    loadProviders(),
+    loadStats()
+  ]);
+  updateToolCount();
+}
+
+async function loadStats() {
+  try {
+    const data = await apiRequest('/api/settings/stats');
+    state.stats = data;
+    return data;
+  } catch (error) {
+    console.error('Failed to load stats:', error);
+    return null;
+  }
+}
+
+function updateToolCount() {
+  const count = state.tools?.length || 0;
+  const badge = document.getElementById('tools-count');
+  if (badge) {
+    badge.textContent = count;
+  }
+  const heroText = document.querySelector('.feature-card:nth-child(2) p');
+  if (heroText && heroText.textContent.includes('built-in tools')) {
+    heroText.textContent = `${count}+ built-in tools including AI chat, web search, code execution, and utilities. Easily extend with custom tools through the modular registry system.`;
+  }
+}
 
 const state = {
   currentPage: 'home',
@@ -999,6 +1060,8 @@ document.addEventListener('DOMContentLoaded', () => {
   
   addLog('info', 'Application initialized');
   addLog('info', 'Connected to MCP server');
+  
+  loadTools().then(() => updateToolCount());
   
   navigate('home');
 });

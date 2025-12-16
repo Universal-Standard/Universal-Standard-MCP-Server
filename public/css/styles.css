@@ -258,6 +258,37 @@ a:hover {
   background: var(--gray-100);
 }
 
+.btn-hero-primary {
+  background: white;
+  color: var(--primary);
+  border: 2px solid white;
+  font-weight: 600;
+}
+
+.btn-hero-primary:hover {
+  background: rgba(255, 255, 255, 0.9);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
+}
+
+.btn-hero-secondary {
+  background: transparent;
+  color: white;
+  border: 2px solid white;
+  font-weight: 600;
+}
+
+.btn-hero-secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .btn-success {
   background: var(--accent);
   color: white;
@@ -911,6 +942,100 @@ a:hover {
   }
   
   .search-box {
+    display: none;
+  }
+  
+  .mobile-menu-toggle {
+    display: flex;
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 200;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius);
+    background: var(--dark);
+    color: white;
+    border: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    cursor: pointer;
+    box-shadow: var(--shadow-lg);
+  }
+  
+  .mobile-menu-toggle:hover {
+    background: var(--darker);
+  }
+  
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 90;
+  }
+  
+  .sidebar-overlay.active {
+    display: block;
+  }
+  
+  .mobile-close-btn {
+    display: flex;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius);
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-left: auto;
+  }
+  
+  .mobile-close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+  
+  .sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .top-bar {
+    padding-left: 72px;
+  }
+  
+  .content-area {
+    padding: 16px;
+  }
+  
+  .hero-buttons {
+    flex-direction: column;
+  }
+  
+  .hero-buttons .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-menu-toggle {
+    display: none;
+  }
+  
+  .sidebar-overlay {
+    display: none !important;
+  }
+  
+  .mobile-close-btn {
     display: none;
   }
 }
