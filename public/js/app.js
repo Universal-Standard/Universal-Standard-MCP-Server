@@ -658,8 +658,13 @@ async function loadLogsPage() {
   
   container.innerHTML = '<p style="color: var(--gray-500);">Loading activity logs...</p>';
   
+  const filterSelect = document.getElementById('logs-filter');
+  const typeFilter = filterSelect ? filterSelect.value : '';
+  
   try {
-    const logs = await loadActivityLogs();
+    const url = typeFilter ? `/api/settings/activity?type=${typeFilter}` : '/api/settings/activity';
+    const data = await apiRequest(url);
+    const logs = data.logs || [];
     
     if (logs.length === 0) {
       container.innerHTML = '<p style="color: var(--gray-500);">No activity logs yet.</p>';
@@ -690,6 +695,44 @@ async function loadLogsPage() {
     `;
   } catch (error) {
     container.innerHTML = `<p style="color: var(--danger);">Failed to load activity logs: ${error.message}</p>`;
+  }
+}
+
+async function exportLogs(format) {
+  const filterSelect = document.getElementById('logs-filter');
+  const typeFilter = filterSelect ? filterSelect.value : '';
+  
+  showNotification(`Exporting logs as ${format.toUpperCase()}...`, 'info');
+  
+  try {
+    let url = `/api/settings/audit/export?format=${format}`;
+    if (typeFilter) {
+      url += `&type=${typeFilter}`;
+    }
+    
+    const response = await fetch(url, {
+      headers: {
+        'X-API-Key': API_KEY
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to export logs');
+    }
+    
+    const blob = await response.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = `audit-logs.${format}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(downloadUrl);
+    
+    showNotification(`Logs exported successfully as ${format.toUpperCase()}!`, 'success');
+  } catch (error) {
+    showNotification(`Failed to export logs: ${error.message}`, 'error');
   }
 }
 
@@ -1040,6 +1083,111 @@ function showSettingsTab(tab) {
   
   if (tab === 'api') {
     loadApiKeys();
+  }
+  if (tab === 'webhooks') {
+    loadWebhooks();
+  }
+}
+
+async function loadWebhooks() {
+  const container = document.getElementById('webhooks-list');
+  if (!container) return;
+  
+  container.innerHTML = '<p style="color: var(--gray-500);">Loading webhooks...</p>';
+  
+  try {
+    const data = await apiRequest('/api/settings/webhooks');
+    const webhooks = data.webhooks || [];
+    
+    if (webhooks.length === 0) {
+      container.innerHTML = '<p style="color: var(--gray-500);">No webhooks configured. Add one to receive notifications.</p>';
+      return;
+    }
+    
+    container.innerHTML = webhooks.map(webhook => `
+      <div class="card" style="margin-bottom: 12px; padding: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <div>
+            <div style="font-weight: 600; margin-bottom: 4px;">${webhook.url}</div>
+            <div style="font-size: 0.875rem; color: var(--gray-500);">
+              Events: ${webhook.events.join(', ')}
+            </div>
+            <div style="font-size: 0.75rem; color: var(--gray-400); margin-top: 4px;">
+              Created: ${new Date(webhook.createdAt).toLocaleString()}
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-secondary" onclick="testWebhook('${webhook.id}')">Test</button>
+            <button class="btn btn-secondary" style="color: var(--danger);" onclick="deleteWebhook('${webhook.id}')">Delete</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  } catch (error) {
+    container.innerHTML = `<p style="color: var(--danger);">Failed to load webhooks: ${error.message}</p>`;
+  }
+}
+
+function showAddWebhookModal() {
+  document.getElementById('webhook-url').value = '';
+  document.getElementById('webhook-secret').value = '';
+  document.querySelectorAll('#webhook-events input[type="checkbox"]').forEach(cb => cb.checked = false);
+  document.getElementById('webhook-modal').classList.add('active');
+}
+
+async function saveWebhook() {
+  const url = document.getElementById('webhook-url').value.trim();
+  const secret = document.getElementById('webhook-secret').value.trim();
+  const events = [];
+  
+  document.querySelectorAll('#webhook-events input[type="checkbox"]:checked').forEach(cb => {
+    events.push(cb.value);
+  });
+  
+  if (!url) {
+    showNotification('Webhook URL is required', 'error');
+    return;
+  }
+  
+  if (events.length === 0) {
+    showNotification('Select at least one event', 'error');
+    return;
+  }
+  
+  try {
+    await apiRequest('/api/settings/webhooks', {
+      method: 'POST',
+      body: JSON.stringify({ url, events, secret: secret || undefined })
+    });
+    
+    closeModal('webhook-modal');
+    showNotification('Webhook created successfully!', 'success');
+    loadWebhooks();
+  } catch (error) {
+    showNotification(`Failed to create webhook: ${error.message}`, 'error');
+  }
+}
+
+async function testWebhook(id) {
+  showNotification('Sending test notification...', 'info');
+  
+  try {
+    await apiRequest(`/api/settings/webhooks/${id}/test`, { method: 'POST' });
+    showNotification('Test notification sent!', 'success');
+  } catch (error) {
+    showNotification(`Test failed: ${error.message}`, 'error');
+  }
+}
+
+async function deleteWebhook(id) {
+  if (!confirm('Are you sure you want to delete this webhook?')) return;
+  
+  try {
+    await apiRequest(`/api/settings/webhooks/${id}`, { method: 'DELETE' });
+    showNotification('Webhook deleted', 'success');
+    loadWebhooks();
+  } catch (error) {
+    showNotification(`Failed to delete webhook: ${error.message}`, 'error');
   }
 }
 

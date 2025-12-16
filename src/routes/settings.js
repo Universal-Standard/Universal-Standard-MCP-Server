@@ -4,6 +4,7 @@ const { providerManager } = require('../providers');
 const { listApiKeys, addApiKey, removeApiKey, updateApiKey } = require('../middleware/apiKeys');
 const { storage } = require('../../server/storage');
 const logger = require('../utils/logger');
+const { webhookManager, WEBHOOK_EVENTS } = require('../utils/webhooks');
 
 const router = express.Router();
 
@@ -458,6 +459,102 @@ router.post('/generated-tools/:id/reload', requireScope('settings:write'), async
   } catch (error) {
     logger.error('Failed to reload generated tool', { error: error.message });
     res.status(500).json({ error: 'Failed to reload generated tool' });
+  }
+});
+
+router.get('/webhooks', requireScope('settings:read'), (req, res) => {
+  const webhooks = webhookManager.listWebhooks();
+  res.json({ 
+    webhooks,
+    count: webhooks.length,
+    availableEvents: WEBHOOK_EVENTS
+  });
+});
+
+router.post('/webhooks', requireScope('settings:write'), async (req, res) => {
+  const { url, events, secret, enabled } = req.body;
+  
+  if (!url || !events || !Array.isArray(events)) {
+    return res.status(400).json({ error: 'URL and events array are required' });
+  }
+  
+  try {
+    const id = `wh_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+    const webhook = webhookManager.registerWebhook(id, {
+      url,
+      events,
+      secret,
+      enabled
+    });
+    
+    await storage.logActivity('webhook', 'created', { id, url, events }, null, req.ip);
+    
+    res.status(201).json({
+      success: true,
+      webhook: {
+        id: webhook.id,
+        url: webhook.url,
+        events: webhook.events,
+        enabled: webhook.enabled,
+        createdAt: webhook.createdAt
+      }
+    });
+  } catch (error) {
+    logger.error('Failed to create webhook', { error: error.message });
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.get('/webhooks/:id', requireScope('settings:read'), (req, res) => {
+  const { id } = req.params;
+  const webhook = webhookManager.getWebhook(id);
+  
+  if (!webhook) {
+    return res.status(404).json({ error: 'Webhook not found' });
+  }
+  
+  res.json({
+    id: webhook.id,
+    url: webhook.url,
+    events: webhook.events,
+    enabled: webhook.enabled,
+    createdAt: webhook.createdAt
+  });
+});
+
+router.delete('/webhooks/:id', requireScope('settings:write'), async (req, res) => {
+  const { id } = req.params;
+  
+  const removed = webhookManager.unregisterWebhook(id);
+  
+  if (!removed) {
+    return res.status(404).json({ error: 'Webhook not found' });
+  }
+  
+  await storage.logActivity('webhook', 'deleted', { id }, null, req.ip);
+  
+  res.json({ success: true, message: 'Webhook deleted' });
+});
+
+router.post('/webhooks/:id/test', requireScope('settings:write'), async (req, res) => {
+  const { id } = req.params;
+  
+  try {
+    const success = await webhookManager.testWebhook(id);
+    
+    if (success) {
+      res.json({ 
+        success: true, 
+        message: 'Test notification sent successfully'
+      });
+    } else {
+      res.json({ 
+        success: false, 
+        message: 'Test notification sent but webhook endpoint did not respond successfully'
+      });
+    }
+  } catch (error) {
+    res.status(404).json({ error: error.message });
   }
 });
 

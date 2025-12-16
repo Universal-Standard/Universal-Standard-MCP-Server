@@ -4,6 +4,7 @@ const { promptRegistry } = require('../mcp/promptRegistry');
 const { resourceRegistry } = require('../mcp/resourceRegistry');
 const { requireScope } = require('../middleware/auth');
 const logger = require('../utils/logger');
+const { webhookManager } = require('../utils/webhooks');
 
 const router = express.Router();
 
@@ -50,11 +51,28 @@ router.post('/tools/call', requireScope('tools:execute'), async (req, res) => {
         evolutionId: result._evolution.evolutionId,
         duration: result._evolution.duration 
       });
+      
+      webhookManager.trigger('tool.created', {
+        toolName: name,
+        evolutionId: result._evolution.evolutionId,
+        duration: result._evolution.duration
+      });
     }
+    
+    webhookManager.trigger('tool.executed', {
+      toolName: name,
+      success: true,
+      hasEvolution: !!result._evolution?.newTool
+    });
     
     res.json(result);
   } catch (error) {
     logger.error('Tool call failed', { name, error: error.message, statusCode: error.statusCode });
+    
+    webhookManager.trigger('tool.failed', {
+      toolName: name,
+      error: error.message
+    });
     
     const statusCode = error.statusCode || 
       (error.message.includes('Invalid') || error.message.includes('required') || error.message.includes('Missing') ? 400 : 500);

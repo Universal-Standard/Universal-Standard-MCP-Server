@@ -518,7 +518,19 @@
           <div class="card">
             <div class="card-header">
               <h3 class="card-title">Database Activity Logs</h3>
-              <button class="btn btn-secondary" onclick="loadLogsPage()">Refresh</button>
+              <div style="display: flex; gap: 12px;">
+                <select class="form-select" id="logs-filter" style="width: auto;" onchange="loadLogsPage()">
+                  <option value="">All Types</option>
+                  <option value="api">API Requests</option>
+                  <option value="tool">Tool Execution</option>
+                  <option value="settings">Settings Changes</option>
+                  <option value="api_key">API Key Management</option>
+                  <option value="test">Provider Tests</option>
+                </select>
+                <button class="btn btn-secondary" onclick="loadLogsPage()">Refresh</button>
+                <button class="btn btn-secondary" onclick="exportLogs('json')">Export JSON</button>
+                <button class="btn btn-secondary" onclick="exportLogs('csv')">Export CSV</button>
+              </div>
             </div>
             <div class="card-body">
               <div id="activity-logs-container" style="max-height: 600px; overflow-y: auto;">
@@ -537,6 +549,7 @@
           <div class="tabs">
             <button class="tab active" onclick="showSettingsTab('providers')">AI Providers</button>
             <button class="tab" onclick="showSettingsTab('api')">API Settings</button>
+            <button class="tab" onclick="showSettingsTab('webhooks')">Webhooks</button>
             <button class="tab" onclick="showSettingsTab('security')">Security</button>
           </div>
           
@@ -637,6 +650,44 @@
               </div>
               <div class="card-footer">
                 <button class="btn btn-primary" onclick="saveServerSettings()">Save Changes</button>
+              </div>
+            </div>
+          </div>
+          
+          <div id="settings-webhooks" class="settings-section" style="display: none;">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Webhook Notifications</h3>
+                <button class="btn btn-primary" onclick="showAddWebhookModal()">Add Webhook</button>
+              </div>
+              <div class="card-body">
+                <p style="color: var(--gray-600); margin-bottom: 16px;">
+                  Receive real-time notifications when events occur in your MCP server. Webhooks are sent via POST with a JSON payload.
+                </p>
+                <div id="webhooks-list" style="margin-top: 16px;">
+                  <p style="color: var(--gray-500);">Loading webhooks...</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="card" style="margin-top: 24px;">
+              <div class="card-header">
+                <h3 class="card-title">Available Events</h3>
+              </div>
+              <div class="card-body">
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px;">
+                  <div class="badge badge-tool">tool.executed</div>
+                  <div class="badge badge-tool">tool.created</div>
+                  <div class="badge badge-tool">tool.failed</div>
+                  <div class="badge badge-api_key">api_key.created</div>
+                  <div class="badge badge-api_key">api_key.deleted</div>
+                  <div class="badge badge-settings">provider.configured</div>
+                  <div class="badge badge-settings">provider.test_failed</div>
+                  <div class="badge badge-settings">security.rate_limit_exceeded</div>
+                  <div class="badge badge-settings">evolution.started</div>
+                  <div class="badge badge-settings">evolution.completed</div>
+                  <div class="badge badge-settings">evolution.failed</div>
+                </div>
               </div>
             </div>
           </div>
@@ -808,6 +859,41 @@
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeModal('provider-modal')">Cancel</button>
         <button class="btn btn-primary" onclick="saveProviderConfig()">Save</button>
+      </div>
+    </div>
+  </div>
+  
+  <div id="webhook-modal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Add Webhook</h3>
+        <button class="modal-close" onclick="closeModal('webhook-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Webhook URL *</label>
+          <input type="url" class="form-input" id="webhook-url" placeholder="https://your-server.com/webhook">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Events to Subscribe *</label>
+          <div id="webhook-events" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 8px;">
+            <label style="display: flex; align-items: center; gap: 8px;"><input type="checkbox" value="tool.executed"> tool.executed</label>
+            <label style="display: flex; align-items: center; gap: 8px;"><input type="checkbox" value="tool.created"> tool.created</label>
+            <label style="display: flex; align-items: center; gap: 8px;"><input type="checkbox" value="tool.failed"> tool.failed</label>
+            <label style="display: flex; align-items: center; gap: 8px;"><input type="checkbox" value="api_key.created"> api_key.created</label>
+            <label style="display: flex; align-items: center; gap: 8px;"><input type="checkbox" value="api_key.deleted"> api_key.deleted</label>
+            <label style="display: flex; align-items: center; gap: 8px;"><input type="checkbox" value="evolution.completed"> evolution.completed</label>
+            <label style="display: flex; align-items: center; gap: 8px;"><input type="checkbox" value="*" id="webhook-all-events"> All Events</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Secret (optional)</label>
+          <input type="text" class="form-input" id="webhook-secret" placeholder="Used for HMAC signature verification">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('webhook-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveWebhook()">Save Webhook</button>
       </div>
     </div>
   </div>
