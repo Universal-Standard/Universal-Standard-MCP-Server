@@ -6,9 +6,9 @@ const { registry } = require('../mcp/toolRegistry');
 const { providerManager, SUPPORTED_PROVIDERS } = require('../providers');
 const logger = require('../utils/logger');
 
-const MAX_MESSAGES = 100;
-const MAX_MESSAGE_LENGTH = 100000;
-const MAX_TEXT_LENGTH = 200000;
+const MAX_MESSAGES = 5000;
+const MAX_MESSAGE_LENGTH = 200000;
+const MAX_TEXT_LENGTH = 2000000;
 const DEFAULT_MAX_TOKENS = 8192;
 const MAX_TOKENS_LIMIT = 128000;
 
